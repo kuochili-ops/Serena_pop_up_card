@@ -23,13 +23,11 @@
             perspective: 2500px; overflow: hidden; touch-action: none;
         }
 
-        /* 3D 視角容器 */
         .viewport {
             width: var(--card-w); height: var(--card-h);
             transform-style: preserve-3d;
             transform: rotateX(30deg) rotateY(-30deg) scale(0.85);
             transition: transform 0.1s ease-out; 
-            -webkit-font-smoothing: antialiased;
         }
 
         .card-system { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
@@ -37,9 +35,10 @@
         /* 卡片底座 */
         .card-bottom {
             position: absolute; width: 100%; height: 100%;
-            background: var(--color-pink-paper); border: 1px solid #f5c6cb;
+            background: var(--color-pink-paper); 
+            border: 1px solid #f5c6cb;
             transform-style: preserve-3d;
-            transform: translateZ(-1px);
+            transform: translateZ(-2px); /* 往後壓，確保不擋住其他圖 */
         }
 
         /* 上頁 (封面) */
@@ -48,27 +47,29 @@
             transform-origin: bottom; 
             transform: rotateX(-179.9deg);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
-            transform-style: preserve-3d; z-index: 10;
+            transform-style: preserve-3d; z-index: 20; /* 提高層級 */
         }
         .card-top.is-open { transform: rotateX(-90deg); }
 
         .face {
             position: absolute; width: 100%; height: 100%;
-            backface-visibility: hidden; background-size: cover; background-position: center;
-            -webkit-transform-style: preserve-3d;
+            backface-visibility: hidden;
+            background-size: cover; background-position: center;
+            background-repeat: no-repeat;
         }
 
-        /* 封面外側：紅玫瑰愛心圖 */
+        /* 封面外側 (roses_heart.jpg) */
         .face.front { 
             background-image: url('roses_heart.jpg'); 
-            transform: rotateX(180deg) translateZ(2px);
-            box-shadow: inset 0 0 40px rgba(0,0,0,0.2);
+            background-color: #ffb6c1; /* 預設備份顏色 */
+            transform: rotateX(180deg) translateZ(5px); /* 增加間隙 */
         }
 
-        /* 封面內側：更新為 Cover_inner.PNG */
+        /* 封面內側 (Cover_inner.PNG) */
         .face.back { 
             background-image: url('Cover_inner.PNG');
-            transform: translateZ(1px);
+            background-color: #ffffff; /* 預設備份顏色 */
+            transform: translateZ(1px); /* 確保在內側最前方 */
         }
 
         /* 彈出結構 */
@@ -77,36 +78,28 @@
             width: var(--sub-w); height: var(--sub-h);
             background: rgba(52, 152, 219, 0.5); 
             transform-origin: top; 
-            transform: translateX(-50%) rotateX(0deg) translateZ(5px);
+            transform: translateX(-50%) rotateX(0deg) translateZ(10px);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }
 
-        .sub-light-blue {
-            position: absolute; top: 100%; left: 0; 
-            width: 100%; height: var(--sub-h);
-            background: rgba(133, 193, 233, 0.5); 
-            transform-origin: top; 
-            transform: rotateX(180deg) translateZ(1px); 
-            transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* 主圖：放置於彈出機關上 */
+        /* 主圖 (冬日雪景小屋圖 或 mini_decoration.png) */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            transform: translateX(-50%) translateY(0px) rotateX(180deg) translateZ(10px);
+            /* 關鍵：translateZ(20px) 確保主圖處於所有結構的最上方 */
+            transform: translateX(-50%) translateY(0px) rotateX(180deg) translateZ(20px);
             pointer-events: none;
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; justify-content: center; align-items: center;
         }
 
         .main-img-attachment img {
-            width: 100%; height: 100%; object-fit: contain; object-position: top; 
+            width: 100%; height: 100%; object-fit: contain;
             filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5));
         }
 
-        .card-top.is-open ~ .sub-deep-blue { transform: translateX(-50%) rotateX(90deg) translateZ(5px); }
-        .card-top.is-open ~ .sub-deep-blue .sub-light-blue { transform: rotateX(90deg) translateZ(1px); }
+        .card-top.is-open ~ .sub-deep-blue { transform: translateX(-50%) rotateX(90deg) translateZ(10px); }
 
     </style>
 </head>
@@ -121,9 +114,8 @@
             </div>
             <div class="sub-deep-blue">
                 <div class="main-img-attachment">
-                    <img src="mini_decoration.png" alt="Decoration">
+                    <img src="winter_cabin.jpg" alt="Winter Cabin" onerror="this.style.border='2px dashed red'; console.log('圖片加載失敗');">
                 </div>
-                <div class="sub-light-blue"></div>
             </div>
         </div>
     </div>
@@ -131,28 +123,25 @@
     <script>
         const viewport = document.getElementById('viewport');
         const cover = document.getElementById('cover');
-        
-        let baseRotX = 30, baseRotY = -30, gyroX = 0, gyroY = 0, scale = 0.85;
+        let baseRotX = 30, baseRotY = -30, gyroX = 0, gyroY = 0;
 
         function updateTransform() {
-            viewport.style.transform = `rotateX(${baseRotX + gyroX}deg) rotateY(${baseRotY + gyroY}deg) scale(${scale})`;
+            viewport.style.transform = `rotateX(${baseRotX + gyroX}deg) rotateY(${baseRotY + gyroY}deg) scale(0.85)`;
         }
 
-        // 支援手機陀螺儀 3D 旋轉
         window.addEventListener('deviceorientation', (e) => {
-            if (e.beta === null || e.gamma === null) return;
+            if (e.beta === null) return;
             gyroX = (e.beta - 45) * 0.4;
             gyroY = e.gamma * 0.4;
             updateTransform();
         });
 
-        // 點擊開合與觸控拖拽視角
         let isMoving = false, lastX = 0, lastY = 0;
         window.addEventListener('touchstart', (e) => {
             isMoving = false;
             lastX = e.touches[0].pageX; lastY = e.touches[0].pageY;
             if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission().catch(console.error);
+                DeviceOrientationEvent.requestPermission();
             }
         });
 
@@ -165,17 +154,6 @@
         });
 
         window.addEventListener('touchend', () => { if (!isMoving) cover.classList.toggle('is-open'); });
-
-        // 滑鼠操作相容
-        let isDragging = false;
-        window.addEventListener('mousedown', (e) => { isDragging = true; lastX = e.pageX; lastY = e.pageY; });
-        window.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            baseRotY += (e.pageX - lastX) * 0.5; baseRotX -= (e.pageY - lastY) * 0.5;
-            lastX = e.pageX; lastY = e.pageY;
-            updateTransform();
-        });
-        window.addEventListener('mouseup', () => isDragging = false);
     </script>
 </body>
 </html>
