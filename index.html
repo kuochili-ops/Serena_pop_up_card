@@ -11,13 +11,13 @@
             --card-w: 300px;
             --card-h: 200px;
             --sub-w: 64px;
-            --sub-h: 44px; 
-            /* 主圖尺寸再次縮小 5%：228px * 0.95 = 216.6px */
+            --sub-h: 40px; /* 稍微縮短連桿長度，幫助收納 */
+            /* 主圖尺寸維持縮小後的 216px */
             --img-w: 216px; 
             --img-h: 162px; 
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
-            --anchor-y: 50px; /* 稍微下調錨點位置，防止頂部超出 */
+            --anchor-y: 60px; /* 將機關支點再往下移，確保合起時不頂到頭 */
         }
 
         body {
@@ -70,7 +70,7 @@
             transform: translateZ(1px);
         }
 
-        /* 雙節彈起機關 */
+        /* 雙節機關 */
         .sub-deep-blue {
             position: absolute; left: 50%; top: var(--anchor-y); 
             width: var(--sub-w); height: var(--sub-h);
@@ -91,12 +91,12 @@
             transform-style: preserve-3d;
         }
 
-        /* 主圖立體板 - 優化收納位置 */
+        /* 主圖立體板 - 修正 translateY 數值 */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            /* translateY(5px) 讓它在合起來時更縮進去一點 */
-            transform: translateX(-50%) translateY(5px) rotateX(180deg) translateZ(2px);
+            /* 將 translateY 改為 15px，讓圖片在展開與合起時都更靠近摺痕中心 */
+            transform: translateX(-50%) translateY(15px) rotateX(180deg) translateZ(2px);
             pointer-events: none;
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             display: flex; justify-content: center; align-items: center;
@@ -112,7 +112,7 @@
 
         .hint {
             position: fixed; bottom: 40px; color: rgba(255,255,255,0.4);
-            font-size: 13px; pointer-events: none; letter-spacing: 1px;
+            font-size: 13px; pointer-events: none;
         }
     </style>
 </head>
