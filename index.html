@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pop-up Book：修正穿模版</title>
+    <title>Pop-up Book：主圖高度優化版</title>
     <style>
         :root {
             --card-w: 300px;
@@ -15,7 +15,6 @@
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
             --color-pink-trans: rgba(255, 182, 193, 0.6);
-            /* 位置靠近摺痕 */
             --anchor-y: 20px; 
         }
 
@@ -71,8 +70,11 @@
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            /* 調整 translateY(-20px) 讓大圖在展開時稍微浮起，避免底部穿透 */
-            transform: translateX(-50%) translateY(-20px) rotateX(180deg) translateZ(3px);
+            /* 1. translateY(-45px): 將主圖大幅上提，確保下緣不穿透底座 
+               2. rotateX(175deg): 稍微調整角度，讓圖片頂部微傾，增加下緣與底部的空間感
+            */
+            transform: translateX(-50%) translateY(-45px) rotateX(175deg) translateZ(3px);
+            transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: none;
         }
 
@@ -88,13 +90,11 @@
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* --- 修正後的連動角度 --- */
+        /* --- 修正連動角度 --- */
         .card-top.is-open ~ .sub-deep-blue { 
-            /* 深藍立起約 85 度，不完全過頭 */
             transform: translateX(-50%) rotateX(85deg); 
         }
         .card-top.is-open ~ .sub-deep-blue .sub-light-blue { 
-            /* 淺藍與深藍形成夾角，撐住封面但不穿透 */
             transform: rotateX(50deg); 
         }
 
