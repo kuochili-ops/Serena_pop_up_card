@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pop-up Book：透明粉紅優化版</title>
+    <title>Pop-up Book：方向修正版</title>
     <style>
         :root {
             --card-w: 300px;
             --card-h: 200px;
-            --sub-w: 100px;
-            --sub-h: 60px;
-            --img-w: 150px; 
-            --img-h: 110px;
+            --sub-w: 80px;
+            --sub-h: 55px;
+            --img-w: 140px; 
+            --img-h: 100px;
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
-            /* 透明粉紅色變數 */
-            --color-pink-trans: rgba(255, 182, 193, 0.6); 
-            --anchor-y: 70px; 
+            --color-pink-trans: rgba(255, 182, 193, 0.6);
+            --anchor-y: 60px; 
         }
 
         body {
@@ -28,22 +27,20 @@
         .viewport {
             width: var(--card-w); height: var(--card-h);
             transform-style: preserve-3d;
-            transform: rotateX(30deg) rotateY(-30deg) scale(0.85);
+            transform: rotateX(30deg) rotateY(-30deg) scale(0.8);
         }
 
         .card-system { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
 
         .card-bottom {
             position: absolute; width: 100%; height: 100%;
-            background: var(--color-pink-paper);
-            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--color-pink-paper); border: 1px solid #f5c6cb;
             transform-style: preserve-3d;
         }
 
         .card-top {
             position: absolute; bottom: 0; top: -100%; width: 100%; height: 100%;
-            transform-origin: bottom; 
-            transform: rotateX(-180deg);
+            transform-origin: bottom; transform: rotateX(-180deg);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d; z-index: 10;
         }
@@ -53,56 +50,54 @@
             position: absolute; width: 100%; height: 100%;
             backface-visibility: hidden; background-size: cover; background-position: center;
         }
-        
-        /* 封面外頁 */
         .face.front { background-image: url('IMG_6829.png'); transform: rotateX(180deg); }
         
-        /* 封面內頁：加上透明粉紅色疊加層 */
+        /* 封面內頁：透明粉紅疊加層 */
         .face.back { 
             background: linear-gradient(var(--color-pink-trans), var(--color-pink-trans)), url('IMG_6831.png');
-            background-blend-mode: overlay; /* 讓顏色與底圖混合 */
+            background-blend-mode: overlay;
             background-size: cover;
-            box-shadow: inset 0 0 40px rgba(0,0,0,0.1);
+            transform-style: preserve-3d; 
         }
 
         /* --- 連動結構 --- */
         .sub-deep-blue {
             position: absolute; left: 50%; top: var(--anchor-y); 
             width: var(--sub-w); height: var(--sub-h);
-            background: rgba(52, 152, 219, 0.5); 
-            transform-origin: top; 
+            background: rgba(52, 152, 219, 0.4); transform-origin: top; 
             transform: translateX(-50%) rotateX(0deg);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
+            border: 1px solid rgba(41, 128, 185, 0.3);
+        }
+
+        /* 主圖附著點：修正方向與第一版一致 */
+        .main-img-attachment {
+            position: absolute; left: 50%; top: 0; 
+            width: var(--img-w); height: var(--img-h);
+            /* 回歸第一版邏輯：rotateX(180deg) 讓圖片倒掛，translateZ 確保不穿模 */
+            transform: translateX(-50%) translateY(0px) rotateX(180deg) translateZ(2px);
+            pointer-events: none; backface-visibility: visible;
+        }
+
+        .main-img-attachment img {
+            width: 100%; height: 100%; object-fit: contain; object-position: top; 
         }
 
         .sub-light-blue {
-            position: absolute; top: 100%; left: 0; 
-            width: 100%; height: var(--sub-h);
-            background: rgba(133, 193, 233, 0.5); 
-            transform-origin: top; 
+            position: absolute; top: 100%; left: 0; width: 100%; height: var(--sub-h);
+            background: rgba(133, 193, 233, 0.4); transform-origin: top; 
             transform: rotateX(180deg); 
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .main-img-attachment {
-            position: absolute; left: 50%; top: 50%; 
-            width: var(--img-w); height: var(--img-h);
-            transform: translateX(-50%) translateY(-50%) rotateX(-90deg);
-            transform-style: preserve-3d;
-        }
-        .main-img-attachment img { 
-            width: 100%; height: 100%; object-fit: contain;
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2));
-        }
-
-        /* 觸發連動 */
+        /* 觸發連動：當封面打開時 */
         .card-top.is-open ~ .sub-deep-blue { transform: translateX(-50%) rotateX(90deg); }
         .card-top.is-open ~ .sub-deep-blue .sub-light-blue { transform: rotateX(90deg); }
 
         .hint {
-            position: fixed; bottom: 30px; color: rgba(255,255,255,0.4);
-            font-size: 12px; width: 100%; text-align: center;
+            position: fixed; bottom: 20px; color: rgba(255,255,255,0.5);
+            font-size: 12px; width: 100%; text-align: center; pointer-events: none;
         }
     </style>
 </head>
@@ -126,13 +121,13 @@
         </div>
     </div>
 
-    <div class="hint">單指旋轉 | 雙指縮放 | 點擊封面開啟</div>
+    <div class="hint">單指旋轉 | 雙指縮放 | 輕點開關</div>
 
     <script>
         const viewport = document.getElementById('viewport');
         const cover = document.getElementById('cover');
         
-        let rotX = 30, rotY = -30, scale = 0.85;
+        let rotX = 30, rotY = -30, scale = 0.8;
         let lastTouchX = 0, lastTouchY = 0, lastDist = 0;
         let isMoving = false;
 
@@ -158,7 +153,7 @@
                 lastTouchX = e.touches[0].pageX; lastTouchY = e.touches[0].pageY;
             } else if (e.touches.length === 2) {
                 let dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                scale = Math.min(Math.max(scale + (dist - lastDist) * 0.005, 0.4), 2.5);
+                scale = Math.min(Math.max(scale + (dist - lastDist) * 0.005, 0.3), 2);
                 lastDist = dist;
             }
             updateTransform();
