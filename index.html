@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pop-up Book：底邊貼地校正版</title>
+    <title>Pop-up Book：粉紅玫瑰版</title>
     <style>
         :root {
             --card-w: 300px;
@@ -15,7 +15,7 @@
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
             --color-pink-trans: rgba(255, 182, 193, 0.6);
-            /* 保持接觸上頁的基準 */
+            /* 物理基準：等於連桿高度，確保淺藍頁觸碰上頁 */
             --anchor-y: 44px; 
         }
 
@@ -52,7 +52,14 @@
             position: absolute; width: 100%; height: 100%;
             backface-visibility: hidden; background-size: cover; background-position: center;
         }
-        .face.front { background-image: url('IMG_6829.png'); transform: rotateX(180deg); }
+
+        /* --- 上頁外側：改為玫瑰花圖案 --- */
+        .face.front { 
+            background-image: url('roses.jpg'); 
+            transform: rotateX(180deg); 
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.1);
+        }
+
         .face.back { 
             background: linear-gradient(var(--color-pink-trans), var(--color-pink-trans)), url('IMG_6831.png');
             background-blend-mode: overlay; background-size: cover;
@@ -78,14 +85,11 @@
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* --- 主圖高度微調 --- */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            /* 從 106px 往下放一點到 88px */
-            /* 如果還是太高，請減小這個數值（例如 80px） */
-            /* 如果還是穿透，請增加這個數值（例如 95px） */
-            transform: translateX(-50%) translateY(00px) rotateX(180deg) translateZ(3px);
+            /* 確定位移 0px */
+            transform: translateX(-50%) translateY(0px) rotateX(180deg) translateZ(3px);
             pointer-events: none;
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -95,17 +99,12 @@
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
         }
 
-        .card-top.is-open ~ .sub-deep-blue { 
-            transform: translateX(-50%) rotateX(90deg); 
-        }
-        .card-top.is-open ~ .sub-deep-blue .sub-light-blue { 
-            transform: rotateX(90deg); 
-        }
+        .card-top.is-open ~ .sub-deep-blue { transform: translateX(-50%) rotateX(90deg); }
+        .card-top.is-open ~ .sub-deep-blue .sub-light-blue { transform: rotateX(90deg); }
 
     </style>
 </head>
 <body>
-
     <div class="viewport" id="viewport">
         <div class="card-system">
             <div class="card-bottom"></div>
@@ -121,14 +120,12 @@
             </div>
         </div>
     </div>
-
     <script>
         const viewport = document.getElementById('viewport');
         const cover = document.getElementById('cover');
-        let rotX = 30, rotY = -30, scale = 0.85, isMoving = false;
+        let rotX = 30, rotY = -30, scale = 0.85;
         function updateTransform() { viewport.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) scale(${scale})`; }
-        window.addEventListener('touchend', () => { if (!isMoving) cover.classList.toggle('is-open'); });
-        // 滑鼠與觸控邏輯簡化保留
+        window.addEventListener('touchend', () => { cover.classList.toggle('is-open'); });
         let isDragging = false, mX, mY;
         window.addEventListener('mousedown', (e) => { isDragging = true; mX = e.pageX; mY = e.pageY; });
         window.addEventListener('mousemove', (e) => {
