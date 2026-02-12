@@ -11,20 +11,19 @@
             --card-w: 300px;
             --card-h: 200px;
             --sub-w: 64px;
-            --sub-h: 40px; 
-            /* 主圖尺寸縮小後的 216px */
-            --img-w: 216px; 
-            --img-h: 162px; 
+            --sub-h: 35px; /* 縮短支架長度，減少旋轉半徑，防止穿透 */
+            /* 主圖尺寸再縮小 5%：216px * 0.95 = 205px */
+            --img-w: 205px; 
+            --img-h: 154px; 
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
-            --anchor-y: 60px; 
+            --anchor-y: 65px; /* 調整掛點位置 */
         }
 
         body {
             display: flex; justify-content: center; align-items: center;
             height: 100vh; background-color: #1a1a1a; margin: 0;
             perspective: 2500px; overflow: hidden; touch-action: none;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         .viewport {
@@ -70,7 +69,6 @@
             transform: translateZ(1px);
         }
 
-        /* 雙節機關 */
         .sub-deep-blue {
             position: absolute; left: 50%; top: var(--anchor-y); 
             width: var(--sub-w); height: var(--sub-h);
@@ -91,12 +89,13 @@
             transform-style: preserve-3d;
         }
 
-        /* 主圖立體板 - 關鍵修正方向 */
+        /* 主圖立體板：縮小尺寸並大幅拉高 translateY */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            /* 將 translateY 改為負數，讓圖片往摺痕（中心）縮進 */
-            transform: translateX(-50%) translateY(-25px) rotateX(180deg) translateZ(2px);
+            /* translateY(-50px) 將圖片大幅向上提，解決底部穿越問題 */
+            /* translateZ(5px) 稍微往前推一點，增加層次感 */
+            transform: translateX(-50%) translateY(-50px) rotateX(180deg) translateZ(5px);
             pointer-events: none;
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             display: flex; justify-content: center; align-items: center;
