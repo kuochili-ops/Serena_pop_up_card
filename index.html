@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pop-up Book：精簡連桿版</title>
+    <title>Pop-up Book：轉軸貼附優化版</title>
     <style>
         :root {
             --card-w: 300px;
             --card-h: 200px;
-            /* 連桿尺寸減少 20% */
+            /* 連桿尺寸 (已減少 20%) */
             --sub-w: 64px;
             --sub-h: 44px;
-            /* 主圖維持 1.5 倍尺寸 */
+            /* 主圖維持 1.5 倍 */
             --img-w: 210px; 
             --img-h: 150px;
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
             --color-pink-trans: rgba(255, 182, 193, 0.6);
-            --anchor-y: 60px; 
+            /* 調整深藍板塊在底座的位置 */
+            --anchor-y: 80px; 
         }
 
         body {
@@ -40,6 +41,7 @@
             transform-style: preserve-3d;
         }
 
+        /* 封面 */
         .card-top {
             position: absolute; bottom: 0; top: -100%; width: 100%; height: 100%;
             transform-origin: bottom; transform: rotateX(-180deg);
@@ -55,26 +57,39 @@
         .face.front { background-image: url('IMG_6829.png'); transform: rotateX(180deg); }
         .face.back { 
             background: linear-gradient(var(--color-pink-trans), var(--color-pink-trans)), url('IMG_6831.png');
-            background-blend-mode: overlay;
-            background-size: cover;
+            background-blend-mode: overlay; background-size: cover;
             transform-style: preserve-3d; 
         }
 
-        /* --- 立體結構模組 (尺寸已精簡) --- */
+        /* --- 連動結構 --- */
+
+        /* 深藍板塊：底座升起物 */
         .sub-deep-blue {
             position: absolute; left: 50%; top: var(--anchor-y); 
             width: var(--sub-w); height: var(--sub-h);
-            background: rgba(52, 152, 219, 0.4); transform-origin: top; 
+            background: rgba(52, 152, 219, 0.4); 
+            transform-origin: top; 
             transform: translateX(-50%) rotateX(0deg);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
-            border: 1px solid rgba(41, 128, 185, 0.3);
+        }
+
+        /* 淺藍分頁：現在它的轉軸要貼附在大卡上頁 */
+        .sub-light-blue {
+            position: absolute; 
+            /* 讓它位於深藍板塊的末端 */
+            top: 100%; left: 0; 
+            width: 100%; height: var(--sub-h);
+            background: rgba(133, 193, 233, 0.4); 
+            transform-origin: top; 
+            /* 初始狀態：完全折疊 */
+            transform: rotateX(180deg); 
+            transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            /* 維持倒掛邏輯 */
             transform: translateX(-50%) translateY(0px) rotateX(180deg) translateZ(3px);
             pointer-events: none;
         }
@@ -84,16 +99,17 @@
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
         }
 
-        .sub-light-blue {
-            position: absolute; top: 100%; left: 0; width: 100%; height: var(--sub-h);
-            background: rgba(133, 193, 233, 0.4); transform-origin: top; 
-            transform: rotateX(180deg); 
-            transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
+        /* --- 精確連動邏輯 --- */
+        /* 當封面打開 90 度時 */
+        .card-top.is-open ~ .sub-deep-blue { 
+            /* 深藍板塊立起 90 度 */
+            transform: translateX(-50%) rotateX(90deg); 
         }
 
-        /* 開關連動 */
-        .card-top.is-open ~ .sub-deep-blue { transform: translateX(-50%) rotateX(90deg); }
-        .card-top.is-open ~ .sub-deep-blue .sub-light-blue { transform: rotateX(90deg); }
+        .card-top.is-open ~ .sub-deep-blue .sub-light-blue { 
+            /* 淺藍板塊也旋轉 90 度，使其頂部與翻開 90 度的封面背部重合 */
+            transform: rotateX(90deg); 
+        }
 
     </style>
 </head>
@@ -129,7 +145,6 @@
             viewport.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) scale(${scale})`;
         }
 
-        // 手機操作
         window.addEventListener('touchstart', (e) => {
             isMoving = false;
             if (e.touches.length === 1) {
@@ -158,7 +173,6 @@
             if (!isMoving) cover.classList.toggle('is-open');
         });
 
-        // 滑鼠支持
         let isDragging = false, mX, mY;
         window.addEventListener('mousedown', (e) => { isDragging = true; mX = e.pageX; mY = e.pageY; });
         window.addEventListener('mousemove', (e) => {
