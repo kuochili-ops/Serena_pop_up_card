@@ -3,32 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pop-up Book：封面拉動模組版</title>
+    <title>Pop-up Book：物理連動修正版</title>
     <style>
         :root {
             --card-w: 300px;
             --card-h: 200px;
-            --link-w: 100px; /* 連桿寬度 */
-            --link-h: 70px;  /* 連桿長度 */
-            --img-w: 150px;
+            --sub-w: 100px;
+            --sub-h: 60px;
+            --img-w: 150px; 
             --img-h: 110px;
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
-            /* 調整錨點位置 */
-            --anchor-top-y: 120px; 
-            --anchor-bottom-y: 80px;
+            /* 調整結構位置，讓拉動感更明顯 */
+            --anchor-y: 70px; 
         }
 
         body {
             display: flex; justify-content: center; align-items: center;
             height: 100vh; background-color: #1a1a1a; margin: 0;
-            perspective: 2000px; overflow: hidden; touch-action: none;
+            perspective: 2500px; overflow: hidden; touch-action: none;
         }
 
         .viewport {
             width: var(--card-w); height: var(--card-h);
             transform-style: preserve-3d;
-            transform: rotateX(30deg) rotateY(-30deg) scale(0.9);
+            transform: rotateX(30deg) rotateY(-30deg) scale(0.85);
         }
 
         .card-system { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
@@ -41,11 +40,11 @@
             transform-style: preserve-3d;
         }
 
-        /* 封面：現在是動力源 */
+        /* 封面 */
         .card-top {
             position: absolute; bottom: 0; top: -100%; width: 100%; height: 100%;
             transform-origin: bottom; 
-            transform: rotateX(-179.9deg);
+            transform: rotateX(-180deg);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d; z-index: 10;
         }
@@ -58,52 +57,52 @@
         .face.front { background-image: url('IMG_6829.png'); transform: rotateX(180deg); }
         .face.back { background-image: url('IMG_6831.png'); }
 
-        /* --- 拉動式結構模組 --- */
+        /* --- 連動結構模組 --- */
 
-        /* 1. 淺藍連桿 (固定在封面背部) */
-        .pull-link-light {
-            position: absolute;
-            left: 50%; top: var(--anchor-top-y);
-            width: var(--link-w); height: var(--link-h);
-            background: rgba(133, 193, 233, 0.6);
-            transform-origin: top;
-            /* 初始摺疊在封面背後 */
-            transform: translateX(-50%) rotateX(0deg); 
+        /* 深藍板塊：現在回到大卡上，作為底座升起物 */
+        .sub-deep-blue {
+            position: absolute; left: 50%; top: var(--anchor-y); 
+            width: var(--sub-w); height: var(--sub-h);
+            background: rgba(52, 152, 219, 0.5); 
+            transform-origin: top; 
+            /* 初始狀態：平躺在底座 */
+            transform: translateX(-50%) rotateX(0deg);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }
 
-        /* 2. 深藍連桿 (連接淺藍與底座) */
-        .pull-link-deep {
-            position: absolute;
-            top: 100%; left: 0;
-            width: 100%; height: var(--link-h);
-            background: rgba(52, 152, 219, 0.6);
-            transform-origin: top;
-            /* 與淺藍形成 V 字 */
-            transform: rotateX(-160deg);
+        /* 淺藍分頁：作為「拉桿」，連接深藍與封面 */
+        .sub-light-blue {
+            position: absolute; top: 100%; left: 0; 
+            width: 100%; height: var(--sub-h);
+            background: rgba(133, 193, 233, 0.5); 
+            transform-origin: top; 
+            /* 初始狀態：折疊在深藍板塊下方 */
+            transform: rotateX(180deg); 
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
-            transform-style: preserve-3d;
         }
 
-        /* 3. 主圖 (附著在深藍板塊上) */
+        /* 主圖：附著在深藍板塊上 */
         .main-img-attachment {
-            position: absolute;
-            left: 50%; top: 50%;
+            position: absolute; left: 50%; top: 50%; 
             width: var(--img-w); height: var(--img-h);
-            /* 讓圖片立起來垂直於觀看者 */
-            transform: translateX(-50%) translateY(-50%) rotateX(80deg);
+            /* 修正圖片角度：當深藍板塊站起 90 度時，圖片要垂直於觀看者 */
+            transform: translateX(-50%) translateY(-50%) rotateX(-90deg);
             transform-style: preserve-3d;
         }
         .main-img-attachment img { width: 100%; height: 100%; object-fit: contain; }
 
-        /* --- 開放狀態的機械連動 --- */
-        /* 當封面打開 90 度時 */
-        .is-open .pull-link-light {
-            transform: translateX(-50%) rotateX(-45deg); /* 淺藍向外撐開 */
+        /* --- 核心連動邏輯 --- */
+        /* 當 .card-top 獲得 .is-open 類名時，利用相鄰選擇器帶動後方結構 */
+        
+        .card-top.is-open ~ .sub-deep-blue {
+            /* 封面翻開 90 度，深藍板塊被拉起 90 度 */
+            transform: translateX(-50%) rotateX(90deg);
         }
-        .is-open .pull-link-deep {
-            transform: rotateX(-90deg); /* 深藍被拉動到與底座垂直 */
+
+        .card-top.is-open ~ .sub-deep-blue .sub-light-blue {
+            /* 淺藍分頁作為連接臂，角度打開形成 L 型支撐 */
+            transform: rotateX(90deg);
         }
 
     </style>
@@ -116,26 +115,25 @@
             
             <div class="card-top" id="cover">
                 <div class="face front"></div>
-                <div class="face back">
-                    <div class="pull-link-light">
-                        <div class="pull-link-deep">
-                            <div class="main-img-attachment">
-                                <img src="IMG_6832.jpg" alt="主圖">
-                            </div>
-                        </div>
-                    </div>
+                <div class="face back"></div>
+            </div>
+
+            <div class="sub-deep-blue">
+                <div class="main-img-attachment">
+                    <img src="IMG_6832.jpg" alt="主圖">
                 </div>
+                <div class="sub-light-blue"></div>
             </div>
         </div>
     </div>
 
-    <div class="hint">單指旋轉 | 雙指縮放 | 點擊封面拉開連桿</div>
+    <div class="hint">單指旋轉 | 雙指縮放 | 點擊封面觸發拉動連動</div>
 
     <script>
         const viewport = document.getElementById('viewport');
         const cover = document.getElementById('cover');
         
-        let rotX = 30, rotY = -30, scale = 0.9;
+        let rotX = 30, rotY = -30, scale = 0.85;
         let lastTouchX = 0, lastTouchY = 0, lastDist = 0;
         let isMoving = false;
 
@@ -143,6 +141,7 @@
             viewport.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) scale(${scale})`;
         }
 
+        // 手機觸控
         window.addEventListener('touchstart', (e) => {
             isMoving = false;
             if (e.touches.length === 1) {
@@ -171,7 +170,7 @@
             if (!isMoving) cover.classList.toggle('is-open');
         });
 
-        // 滑鼠支持
+        // 滑鼠操作
         let isDragging = false, mX, mY;
         window.addEventListener('mousedown', (e) => { isDragging = true; mX = e.pageX; mY = e.pageY; });
         window.addEventListener('mousemove', (e) => {
