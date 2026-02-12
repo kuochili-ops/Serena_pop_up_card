@@ -3,21 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pop-up Book：幾何對齊版</title>
+    <title>Pop-up Book：完美對齊基準版</title>
     <style>
         :root {
             --card-w: 300px;
             --card-h: 200px;
             --sub-w: 64px;
-            /* 淺藍頁與深藍頁的高度 */
-            --sub-h: 44px;
+            --sub-h: 44px; /* 連桿高度 */
             --img-w: 210px; 
-            --img-h: 150px;
+            --img-h: 150px; /* 主圖高度 */
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
             --color-pink-trans: rgba(255, 182, 193, 0.6);
-            /* 關鍵修正：當 anchor-y 等於 sub-h (44px) 時，
-               展開後的淺藍頁長度剛好會填滿到摺痕，進而觸碰上頁內側。 */
+            /* 物理基準點：等於連桿高度，確保觸碰上頁內側 */
             --anchor-y: 44px; 
         }
 
@@ -81,12 +79,17 @@
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        /* --- 主圖精確對齊修正 --- */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            /* 調整位移讓底邊貼近底座 */
-            transform: translateX(-50%) translateY(-2px) rotateX(180deg) translateZ(3px);
+            /* 修正基準點：
+               使用 translateY(-104px) 將主圖往上提，
+               這讓主圖的底邊在深藍頁立起時，剛好與大卡下頁的表面切齊。
+            */
+            transform: translateX(-50%) translateY(-104px) rotateX(180deg) translateZ(3px);
             pointer-events: none;
+            transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .main-img-attachment img {
@@ -94,12 +97,11 @@
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
         }
 
-        /* --- 精確連動角度 --- */
+        /* --- 連動邏輯 --- */
         .card-top.is-open ~ .sub-deep-blue { 
             transform: translateX(-50%) rotateX(90deg); 
         }
         .card-top.is-open ~ .sub-deep-blue .sub-light-blue { 
-            /* 轉動 90 度，使其水平伸向摺痕，剛好碰觸到上頁內壁 */
             transform: rotateX(90deg); 
         }
 
