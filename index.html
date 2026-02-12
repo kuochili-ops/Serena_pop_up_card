@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pop-up Book：底邊貼合版</title>
+    <title>Pop-up Book：真實物理結構版</title>
     <style>
         :root {
             --card-w: 300px;
@@ -15,8 +15,8 @@
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
             --color-pink-trans: rgba(255, 182, 193, 0.6);
-            /* 維持靠近摺痕，便於底邊貼合 */
-            --anchor-y: 20px; 
+            /* 淺藍頁黏貼在封面上的高度（距轉軸距離） */
+            --attach-dist: 44px; 
         }
 
         body {
@@ -33,15 +33,18 @@
 
         .card-system { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
 
+        /* 大卡下頁 (底座) */
         .card-bottom {
             position: absolute; width: 100%; height: 100%;
             background: var(--color-pink-paper); border: 1px solid #f5c6cb;
             transform-style: preserve-3d;
         }
 
+        /* 大卡上頁 (封面) */
         .card-top {
             position: absolute; bottom: 0; top: -100%; width: 100%; height: 100%;
-            transform-origin: bottom; transform: rotateX(-179.9deg);
+            transform-origin: bottom; 
+            transform: rotateX(-179.9deg); /* 閉合狀態 */
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d; z-index: 10;
         }
@@ -52,53 +55,61 @@
             backface-visibility: hidden; background-size: cover; background-position: center;
         }
         .face.front { background-image: url('IMG_6829.png'); transform: rotateX(180deg); }
+        
+        /* 上頁內側面 */
         .face.back { 
             background: linear-gradient(var(--color-pink-trans), var(--color-pink-trans)), url('IMG_6831.png');
             background-blend-mode: overlay; background-size: cover;
             transform-style: preserve-3d; 
         }
 
-        /* --- 連動結構 --- */
-        .sub-deep-blue {
-            position: absolute; left: 50%; top: var(--anchor-y); 
+        /* --- 符合現實物理的連動結構 --- */
+
+        /* 淺藍分頁：頂部黏在封面內側，形成轉軸 */
+        .sub-light-blue {
+            position: absolute; left: 50%; 
+            bottom: var(--attach-dist); /* 從封面轉軸往上數的位置 */
             width: var(--sub-w); height: var(--sub-h);
-            background: rgba(52, 152, 219, 0.5); transform-origin: top; 
-            transform: translateX(-50%) rotateX(0deg);
+            background: rgba(133, 193, 233, 0.6); 
+            transform-origin: top; /* 這是物理轉軸點 */
+            transform: translateX(-50%) rotateX(0deg); 
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }
 
+        /* 深藍板塊：連接淺藍分頁與底座 */
+        .sub-deep-blue {
+            position: absolute; top: 100%; left: 0;
+            width: 100%; height: var(--sub-h);
+            background: rgba(52, 152, 219, 0.6);
+            transform-origin: top;
+            transform: rotateX(0deg);
+            transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        /* 主圖：倒掛在深藍板塊上 */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            /* 修正：使用負值 translateY 往下壓。
-               -15px 左右通常能讓 150px 高度的圖片底邊靠近底座。
-               如果您的圖片腳下留白較多，可以增加為 -20px 或 -25px。
-            */
-            transform: translateX(-50%) translateY(-15px) rotateX(180deg) translateZ(3px);
-            transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
+            /* translateY 調整：讓底邊剛好靠近下頁 */
+            transform: translateX(-50%) translateY(-10px) rotateX(180deg) translateZ(2px);
             pointer-events: none;
         }
-
         .main-img-attachment img {
-            width: 100%; height: 100%; object-fit: contain; object-position: top; 
+            width: 100%; height: 100%; object-fit: contain; object-position: top;
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
         }
 
-        .sub-light-blue {
-            position: absolute; top: 100%; left: 0; width: 100%; height: var(--sub-h);
-            background: rgba(133, 193, 233, 0.5); transform-origin: top; 
-            transform: rotateX(180deg); 
-            transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
+        /* --- 開合時的角度連動 --- */
+        /* 封面打開時，淺藍分頁向下彈開 */
+        .is-open .sub-light-blue {
+            transform: translateX(-50%) rotateX(-45deg); 
         }
-
-        /* --- 連動角度調整：確保垂直貼合 --- */
-        .card-top.is-open ~ .sub-deep-blue { 
-            /* 讓深藍板塊維持正 90 度垂直，方便精準定位底邊 */
-            transform: translateX(-50%) rotateX(90deg); 
-        }
-        .card-top.is-open ~ .sub-deep-blue .sub-light-blue { 
-            transform: rotateX(60deg); 
+        /* 深藍板塊則反向彎折，最終立在底座上 */
+        .is-open .sub-deep-blue {
+            /* 調整這個角度使深藍板塊垂直於底座 */
+            transform: rotateX(-45deg); 
         }
 
     </style>
@@ -111,14 +122,15 @@
             
             <div class="card-top" id="cover">
                 <div class="face front"></div>
-                <div class="face back"></div>
-            </div>
-
-            <div class="sub-deep-blue">
-                <div class="main-img-attachment">
-                    <img src="minnie.jpg" alt="Minnie">
+                <div class="face back">
+                    <div class="sub-light-blue">
+                        <div class="sub-deep-blue">
+                            <div class="main-img-attachment">
+                                <img src="minnie.jpg" alt="Minnie">
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="sub-light-blue"></div>
             </div>
         </div>
     </div>
