@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pop-up Book：轉軸貼附與效果回歸版</title>
+    <title>Pop-up Book：隱藏驚喜版</title>
     <style>
         :root {
             --card-w: 300px;
@@ -14,9 +14,8 @@
             --img-h: 150px;
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
-            --color-pink-trans: rgba(255, 182, 193, 0.6);
-            /* 淺藍分頁在上頁內側的黏貼位置 */
-            --attach-y: 120px; 
+            --color-pink-trans: rgba(255, 182, 193, 0.7);
+            --attach-y: 110px; 
         }
 
         body {
@@ -42,7 +41,8 @@
         /* 大卡上頁 (封面) */
         .card-top {
             position: absolute; bottom: 0; top: -100%; width: 100%; height: 100%;
-            transform-origin: bottom; transform: rotateX(-180deg);
+            transform-origin: bottom; 
+            transform: rotateX(-179.9deg); /* 初始閉合 */
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d; z-index: 10;
         }
@@ -54,7 +54,7 @@
         }
         .face.front { background-image: url('IMG_6829.png'); transform: rotateX(180deg); }
         
-        /* 內側面：加上透明粉紅 */
+        /* 內側面：透明粉紅，主圖初始隱藏在此層之後 */
         .face.back { 
             background: linear-gradient(var(--color-pink-trans), var(--color-pink-trans)), url('IMG_6831.png');
             background-blend-mode: overlay; background-size: cover;
@@ -62,14 +62,13 @@
         }
 
         /* --- 連動結構：淺藍上邊貼附 --- */
-
         .sub-light-blue {
             position: absolute; 
-            left: 50%; top: var(--attach-y); /* 貼附在上頁內側特定高度 */
+            left: 50%; top: var(--attach-y);
             width: var(--sub-w); height: var(--sub-h);
             background: rgba(133, 193, 233, 0.6); 
-            transform-origin: top; /* 頂邊為轉軸 */
-            /* 初始摺疊狀態 */
+            transform-origin: top;
+            /* 初始狀態：平貼封面，不被看見 */
             transform: translateX(-50%) rotateX(0deg); 
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
@@ -85,12 +84,13 @@
             transform-style: preserve-3d;
         }
 
-        /* 主圖：修正方向使其面對觀眾 */
+        /* 主圖附著點：修正初始角度實現隱藏效果 */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            /* 這裡的 rotateX 需要補償封面的旋轉，使其在 90 度時保持垂直 */
-            transform: translateX(-50%) rotateX(180deg) translateZ(2px);
+            /* 初始：rotateX(180deg) 配合父層旋轉，使其背對觀眾藏在裡面 */
+            transform: translateX(-50%) rotateX(180deg) translateZ(1px);
+            transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: none;
         }
         .main-img-attachment img {
@@ -98,16 +98,16 @@
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
         }
 
-        /* --- 關鍵連動邏輯 --- */
-        /* 當封面打開 90 度 (垂直) */
+        /* --- 展開後的連動：轉出來面對觀眾 --- */
         .is-open .sub-light-blue {
-            /* 淺藍往後折 90 度貼住封面 */
-            transform: translateX(-50%) rotateX(-90deg); 
+            transform: translateX(-50%) rotateX(-90deg); /* 淺藍垂直離開封面 */
         }
         .is-open .sub-deep-blue {
-            /* 深藍往前折 90 度，剛好抵銷掉前面的旋轉，使其水平於底座但位置懸空 */
-            /* 為了呈現第一版「站立」的效果，調整為 90 度 */
-            transform: rotateX(90deg);
+            transform: rotateX(90deg); /* 深藍修正角度，讓主圖立起 */
+        }
+        /* 可選：增加圖片在展開時的微調角度，讓它更「正」 */
+        .is-open .main-img-attachment {
+            transform: translateX(-50%) rotateX(180deg) translateZ(5px);
         }
 
     </style>
@@ -163,7 +163,7 @@
                 lastTouchX = e.touches[0].pageX; lastTouchY = e.touches[0].pageY;
             } else if (e.touches.length === 2) {
                 let dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                scale = Math.min(Math.max(scale + (dist - lastDist) * 0.005, 0.3), 2);
+                scale = Math.min(Math.max(scale + (dist - lastDist) * 0.005, 0.3), 2.5);
                 lastDist = dist;
             }
             updateTransform();
