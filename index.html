@@ -3,22 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pop-up Book：回歸第一版結構</title>
+    <title>Pop-up Book：物理空間修正版</title>
     <style>
         :root {
             --card-w: 300px;
             --card-h: 200px;
-            /* 採用您喜歡的精簡連桿尺寸 */
             --sub-w: 64px;
             --sub-h: 44px;
-            /* 採用您要求的 1.5 倍主圖尺寸 */
             --img-w: 210px; 
             --img-h: 150px;
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
             --color-pink-trans: rgba(255, 182, 193, 0.6);
-            /* 回歸第一版：從摺痕處（0px）開始站立 */
-            --anchor-y: 0px; 
+            /* 關鍵：將立體結構往遠離摺痕的方向移動，預留支撐空間 */
+            /* 數值越大，離摺痕越遠，越不會穿透上頁 */
+            --anchor-y: 65px; 
         }
 
         body {
@@ -35,18 +34,16 @@
 
         .card-system { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
 
-        /* 下頁底座 */
         .card-bottom {
             position: absolute; width: 100%; height: 100%;
             background: var(--color-pink-paper); border: 1px solid #f5c6cb;
             transform-style: preserve-3d;
         }
 
-        /* 上頁封面 */
         .card-top {
             position: absolute; bottom: 0; top: -100%; width: 100%; height: 100%;
             transform-origin: bottom; 
-            transform: rotateX(-180deg);
+            transform: rotateX(-179.9deg);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d; z-index: 10;
         }
@@ -63,19 +60,18 @@
             transform-style: preserve-3d; 
         }
 
-        /* --- 第一版連桿模組：深藍立柱 --- */
+        /* --- 立體結構模組 --- */
         .sub-deep-blue {
             position: absolute; left: 50%; top: var(--anchor-y); 
             width: var(--sub-w); height: var(--sub-h);
             background: rgba(52, 152, 219, 0.5); 
             transform-origin: top; 
-            /* 初始摺疊在底座上 */
             transform: translateX(-50%) rotateX(0deg);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }
 
-        /* 淺藍支撐頁：連接深藍與上頁 */
+        /* 淺藍頁：現在它有足夠的「退後」空間，不會再撞牆穿透 */
         .sub-light-blue {
             position: absolute; top: 100%; left: 0; 
             width: 100%; height: var(--sub-h);
@@ -85,12 +81,11 @@
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* 主圖：倒掛在深藍板塊上，實現最初版本的站立效果 */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            /* 回歸最初版位移：translateY(0) 讓底邊與轉軸對齊 */
-            transform: translateX(-50%) translateY(0px) rotateX(180deg) translateZ(3px);
+            /* translateY(-5px) 微調：讓底邊剛好壓在底座附近 */
+            transform: translateX(-50%) translateY(-5px) rotateX(180deg) translateZ(3px);
             pointer-events: none;
         }
 
@@ -99,13 +94,13 @@
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
         }
 
-        /* --- 第一版連動邏輯 --- */
-        /* 當封面打開時，深藍立柱站起 90 度 */
+        /* --- 修正後的物理連動 --- */
         .card-top.is-open ~ .sub-deep-blue { 
+            /* 深藍立起至 90 度，因為離摺痕夠遠，所以不會撞到封面 */
             transform: translateX(-50%) rotateX(90deg); 
         }
-        /* 淺藍支撐頁隨之轉動，撐在上頁內側 */
         .card-top.is-open ~ .sub-deep-blue .sub-light-blue { 
+            /* 淺藍頁現在可以呈 90 度角平穩支撐在封面內側，不再穿越 */
             transform: rotateX(90deg); 
         }
 
