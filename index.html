@@ -55,23 +55,23 @@
             backface-visibility: hidden; background-size: cover; background-position: center;
         }
 
-        /* 封面外側 (roses_heart.jpg) */
+        /* 封面外側 (對應截圖: roses_heart.jpg) */
         .face.front { 
             background-image: url('roses_heart.jpg'); 
             transform: rotateX(180deg) translateZ(1px);
         }
 
-        /* 封面內側 (Cover_inner.PNG) */
+        /* 封面內側 (對應截圖: cover_inner.PNG) */
         .face.back { 
-            background-image: url('Cover_inner.PNG');
+            background-image: url('cover_inner.PNG');
             transform: translateZ(1px);
         }
 
-        /* --- 恢復原有的模組化機關 --- */
+        /* 立體雙節機關 */
         .sub-deep-blue {
             position: absolute; left: 50%; top: var(--anchor-y); 
             width: var(--sub-w); height: var(--sub-h);
-            background: rgba(52, 152, 219, 0.5); 
+            background: rgba(52, 152, 219, 0.4); 
             transform-origin: top; 
             transform: translateX(-50%) rotateX(0deg);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
@@ -81,21 +81,21 @@
         .sub-light-blue {
             position: absolute; top: 100%; left: 0; 
             width: 100%; height: var(--sub-h);
-            background: rgba(133, 193, 233, 0.5); 
+            background: rgba(133, 193, 233, 0.4); 
             transform-origin: top; 
             transform: rotateX(180deg); 
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }
 
-        /* 主圖：固定在支架關節處 */
+        /* 主圖立體板 */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            /* 恢復 0px 位移，並使用 rotateX(180deg) 抵消支架翻轉 */
             transform: translateX(-50%) translateY(0px) rotateX(180deg) translateZ(2px);
             pointer-events: none;
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; justify-content: center; align-items: center;
         }
 
         .main-img-attachment img {
@@ -103,7 +103,7 @@
             filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5));
         }
 
-        /* 機關動作：恢復 90/90 摺疊 */
+        /* 機關連動動作 */
         .card-top.is-open ~ .sub-deep-blue { transform: translateX(-50%) rotateX(90deg); }
         .card-top.is-open ~ .sub-deep-blue .sub-light-blue { transform: rotateX(90deg); }
 
@@ -118,9 +118,10 @@
                 <div class="face front"></div>
                 <div class="face back"></div>
             </div>
+            
             <div class="sub-deep-blue">
                 <div class="main-img-attachment">
-                    <img src="winter_cabin.jpg" alt="Winter Cabin" onerror="this.style.border='1px solid red'">
+                    <img src="minnie.jpg" alt="Inner Decoration" onerror="this.style.border='1px solid red'">
                 </div>
                 <div class="sub-light-blue"></div>
             </div>
@@ -136,7 +137,7 @@
             viewport.style.transform = `rotateX(${baseRotX + gyroX}deg) rotateY(${baseRotY + gyroY}deg) scale(0.85)`;
         }
 
-        // 陀螺儀連動
+        // 偵測裝置陀螺儀
         window.addEventListener('deviceorientation', (e) => {
             if (e.beta === null) return;
             gyroX = (e.beta - 45) * 0.4;
@@ -148,6 +149,7 @@
         window.addEventListener('touchstart', (e) => {
             isMoving = false;
             lastX = e.touches[0].pageX; lastY = e.touches[0].pageY;
+            // 請求權限（iOS 必備）
             if (typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission();
             }
