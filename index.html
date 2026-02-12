@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D Pop-up Card: Gyroscope Enhanced</title>
+    <title>Pop-up Card: Rose Heart Edition</title>
     <style>
         :root {
             --card-w: 300px;
@@ -15,38 +15,33 @@
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
             --color-pink-trans: rgba(255, 182, 193, 0.6);
-            --anchor-y: 44px; 
+            --anchor-y: 44px; /* 基準點：觸碰上頁 */
         }
 
         body {
             display: flex; justify-content: center; align-items: center;
             height: 100vh; background-color: #1a1a1a; margin: 0;
             perspective: 2500px; overflow: hidden; touch-action: none;
-            font-family: sans-serif;
         }
 
-        /* 陀螺儀提示字樣 */
-        #gyro-hint {
-            position: absolute; top: 20px; color: rgba(255,255,255,0.5);
-            font-size: 12px; pointer-events: none;
-        }
-
+        /* 視角容器：陀螺儀將會控制這裡 */
         .viewport {
             width: var(--card-w); height: var(--card-h);
             transform-style: preserve-3d;
-            /* 初始預設角度 */
             transform: rotateX(30deg) rotateY(-30deg) scale(0.85);
-            transition: transform 0.1s ease-out; /* 讓陀螺儀轉動更平滑 */
+            transition: transform 0.1s ease-out; 
         }
 
         .card-system { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
 
+        /* 下頁 */
         .card-bottom {
             position: absolute; width: 100%; height: 100%;
             background: var(--color-pink-paper); border: 1px solid #f5c6cb;
             transform-style: preserve-3d;
         }
 
+        /* 上頁 (封面) */
         .card-top {
             position: absolute; bottom: 0; top: -100%; width: 100%; height: 100%;
             transform-origin: bottom; 
@@ -61,11 +56,11 @@
             backface-visibility: hidden; background-size: cover; background-position: center;
         }
 
-        /* 玫瑰愛心滿版封面 */
+        /* 封面外側：套用紅玫瑰愛心圖 */
         .face.front { 
             background-image: url('roses_heart.jpg'); 
             transform: rotateX(180deg); 
-            box-shadow: inset 0 0 50px rgba(0,0,0,0.2);
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.2);
         }
 
         .face.back { 
@@ -74,12 +69,13 @@
             transform-style: preserve-3d; 
         }
 
-        /* 立體結構 */
+        /* 立體結構模組 */
         .sub-deep-blue {
             position: absolute; left: 50%; top: var(--anchor-y); 
             width: var(--sub-w); height: var(--sub-h);
             background: rgba(52, 152, 219, 0.5); 
-            transform-origin: top; transform: translateX(-50%) rotateX(0deg);
+            transform-origin: top; 
+            transform: translateX(-50%) rotateX(0deg);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }
@@ -88,10 +84,12 @@
             position: absolute; top: 100%; left: 0; 
             width: 100%; height: var(--sub-h);
             background: rgba(133, 193, 233, 0.5); 
-            transform-origin: top; transform: rotateX(180deg); 
+            transform-origin: top; 
+            transform: rotateX(180deg); 
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        /* 主圖位移 0px */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
@@ -111,8 +109,6 @@
     </style>
 </head>
 <body>
-
-    <div id="gyro-hint">Tilt your phone to rotate in 3D</div>
 
     <div class="viewport" id="viewport">
         <div class="card-system">
@@ -134,76 +130,51 @@
         const viewport = document.getElementById('viewport');
         const cover = document.getElementById('cover');
         
-        let baseRotX = 30;
-        let baseRotY = -30;
-        let gyroX = 0;
-        let gyroY = 0;
-        let scale = 0.85;
+        let baseRotX = 30, baseRotY = -30, gyroX = 0, gyroY = 0, scale = 0.85;
 
         function updateTransform() {
-            // 結合手勢基礎角度與陀螺儀偏移角度
             viewport.style.transform = `rotateX(${baseRotX + gyroX}deg) rotateY(${baseRotY + gyroY}deg) scale(${scale})`;
         }
 
-        // --- 陀螺儀 (手機 3D 轉動) ---
+        // 手機 3D 轉動邏輯
         window.addEventListener('deviceorientation', (e) => {
             if (e.beta === null || e.gamma === null) return;
-
-            // beta: 前後傾斜 (-180 到 180)，映射到 X 軸轉動
-            // gamma: 左右傾斜 (-90 到 90)，映射到 Y 軸轉動
-            // 我們取相對偏移值，避免轉動過大
-            gyroX = (e.beta - 45) * 0.5; // 假設 45 度是舒適握持角度
-            gyroY = (e.gamma) * 0.5;
-
+            gyroX = (e.beta - 45) * 0.4; // 以 45 度為握持中心
+            gyroY = e.gamma * 0.4;
             updateTransform();
         });
 
-        // --- 觸控邏輯 (點擊開合) ---
-        let isMoving = false;
-        let lastTouchX = 0, lastTouchY = 0;
-
+        // 點擊與拖動邏輯
+        let isMoving = false, lastX = 0, lastY = 0;
         window.addEventListener('touchstart', (e) => {
             isMoving = false;
-            if (e.touches.length === 1) {
-                lastTouchX = e.touches[0].pageX; 
-                lastTouchY = e.touches[0].pageY;
+            lastX = e.touches[0].pageX; lastY = e.touches[0].pageY;
+            // iOS 權限請求引導
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission().catch(console.error);
             }
         });
 
         window.addEventListener('touchmove', (e) => {
             isMoving = true;
-            if (e.touches.length === 1) {
-                // 手動撥動會改變 baseRot 角度
-                baseRotY += (e.touches[0].pageX - lastTouchX) * 0.5;
-                baseRotX -= (e.touches[0].pageY - lastTouchY) * 0.5;
-                lastTouchX = e.touches[0].pageX;
-                lastTouchY = e.touches[0].pageY;
-                updateTransform();
-            }
+            baseRotY += (e.touches[0].pageX - lastX) * 0.5;
+            baseRotX -= (e.touches[0].pageY - lastY) * 0.5;
+            lastX = e.touches[0].pageX; lastY = e.touches[0].pageY;
+            updateTransform();
         });
 
-        window.addEventListener('touchend', () => {
-            if (!isMoving) cover.classList.toggle('is-open');
-        });
+        window.addEventListener('touchend', () => { if (!isMoving) cover.classList.toggle('is-open'); });
 
-        // 滑鼠相容邏輯
+        // 滑鼠模擬
         let isDragging = false;
-        window.addEventListener('mousedown', (e) => { isDragging = true; lastTouchX = e.pageX; lastTouchY = e.pageY; });
+        window.addEventListener('mousedown', (e) => { isDragging = true; lastX = e.pageX; lastY = e.pageY; });
         window.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
-            baseRotY += (e.pageX - lastTouchX) * 0.5;
-            baseRotX -= (e.pageY - lastTouchY) * 0.5;
-            lastTouchX = e.pageX; lastTouchY = e.pageY;
+            baseRotY += (e.pageX - lastX) * 0.5; baseRotX -= (e.pageY - lastY) * 0.5;
+            lastX = e.pageX; lastY = e.pageY;
             updateTransform();
         });
         window.addEventListener('mouseup', () => isDragging = false);
-
-        // iOS 需要權限請求 (如果是在 HTTPS 下)
-        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-            document.body.addEventListener('click', () => {
-                DeviceOrientationEvent.requestPermission();
-            }, { once: true });
-        }
     </script>
 </body>
 </html>
