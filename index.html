@@ -12,12 +12,12 @@
             --card-h: 200px;
             --sub-w: 64px;
             --sub-h: 44px; 
-            /* 主圖尺寸縮小 5%：240px * 0.95 = 228px */
-            --img-w: 228px; 
-            --img-h: 171px; 
+            /* 主圖尺寸再次縮小 5%：228px * 0.95 = 216.6px */
+            --img-w: 216px; 
+            --img-h: 162px; 
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
-            --anchor-y: 44px; 
+            --anchor-y: 50px; /* 稍微下調錨點位置，防止頂部超出 */
         }
 
         body {
@@ -40,8 +40,9 @@
             position: absolute; width: 100%; height: 100%;
             background: var(--color-pink-paper); 
             border: 1px solid #f5c6cb;
-            border-radius: 5px;
+            border-radius: 8px;
             transform-style: preserve-3d;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         .card-top {
@@ -56,16 +57,14 @@
         .face {
             position: absolute; width: 100%; height: 100%;
             backface-visibility: hidden; background-size: cover; background-position: center;
-            border-radius: 5px;
+            border-radius: 8px;
         }
 
-        /* 封面外側 */
         .face.front { 
             background-image: url('roses_heart.jpg'); 
             transform: rotateX(180deg) translateZ(1px);
         }
 
-        /* 封面內側：Happy Valentines Day for Serena */
         .face.back { 
             background-image: url('cover_inner.PNG');
             transform: translateZ(1px);
@@ -75,7 +74,7 @@
         .sub-deep-blue {
             position: absolute; left: 50%; top: var(--anchor-y); 
             width: var(--sub-w); height: var(--sub-h);
-            background: rgba(52, 152, 219, 0.3); 
+            background: rgba(52, 152, 219, 0.2); 
             transform-origin: top; 
             transform: translateX(-50%) rotateX(0deg);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
@@ -85,18 +84,19 @@
         .sub-light-blue {
             position: absolute; top: 100%; left: 0; 
             width: 100%; height: var(--sub-h);
-            background: rgba(133, 193, 233, 0.3); 
+            background: rgba(133, 193, 233, 0.2); 
             transform-origin: top; 
             transform: rotateX(180deg); 
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }
 
-        /* 主圖立體板 - 尺寸已縮小 */
+        /* 主圖立體板 - 優化收納位置 */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            transform: translateX(-50%) translateY(0px) rotateX(180deg) translateZ(2px);
+            /* translateY(5px) 讓它在合起來時更縮進去一點 */
+            transform: translateX(-50%) translateY(5px) rotateX(180deg) translateZ(2px);
             pointer-events: none;
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             display: flex; justify-content: center; align-items: center;
@@ -104,16 +104,15 @@
 
         .main-img-attachment img {
             width: 100%; height: 100%; object-fit: contain;
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
+            filter: drop-shadow(0 8px 15px rgba(0,0,0,0.4));
         }
 
         .card-top.is-open ~ .sub-deep-blue { transform: translateX(-50%) rotateX(90deg); }
         .card-top.is-open ~ .sub-deep-blue .sub-light-blue { transform: rotateX(90deg); }
 
-        /* App 提示說明 */
         .hint {
-            position: fixed; bottom: 30px; color: rgba(255,255,255,0.5);
-            font-size: 12px; pointer-events: none;
+            position: fixed; bottom: 40px; color: rgba(255,255,255,0.4);
+            font-size: 13px; pointer-events: none; letter-spacing: 1px;
         }
     </style>
 </head>
@@ -129,14 +128,14 @@
             
             <div class="sub-deep-blue">
                 <div class="main-img-attachment">
-                    <img src="minnie.jpg" alt="Decoration">
+                    <img src="minnie.jpg" alt="Minnie">
                 </div>
                 <div class="sub-light-blue"></div>
             </div>
         </div>
     </div>
 
-    <div class="hint">點擊卡片開啟，傾斜手機旋轉視角</div>
+    <div class="hint">點擊開啟 • 傾斜旋轉</div>
 
     <script>
         const viewport = document.getElementById('viewport');
@@ -147,7 +146,6 @@
             viewport.style.transform = `rotateX(${baseRotX + gyroX}deg) rotateY(${baseRotY + gyroY}deg) scale(0.9)`;
         }
 
-        // 手機陀螺儀監控
         window.addEventListener('deviceorientation', (e) => {
             if (e.beta === null) return;
             gyroX = (e.beta - 45) * 0.3;
@@ -155,12 +153,10 @@
             updateTransform();
         });
 
-        // 觸控互動：點擊開合，滑動轉動
         let isMoving = false, lastX = 0, lastY = 0;
         window.addEventListener('touchstart', (e) => {
             isMoving = false;
             lastX = e.touches[0].pageX; lastY = e.touches[0].pageY;
-            // iOS 啟動權限請求
             if (typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission();
             }
@@ -168,8 +164,8 @@
 
         window.addEventListener('touchmove', (e) => {
             isMoving = true;
-            baseRotY += (e.touches[0].pageX - lastX) * 0.5;
-            baseRotX -= (e.touches[0].pageY - lastY) * 0.5;
+            baseRotY += (e.touches[0].pageX - lastX) * 0.4;
+            baseRotX -= (e.touches[0].pageY - lastY) * 0.4;
             lastX = e.touches[0].pageX; lastY = e.touches[0].pageY;
             updateTransform();
         });
