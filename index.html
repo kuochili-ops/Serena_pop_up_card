@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pop-up Card: Rose Heart Edition</title>
+    <title>Pop-up Card: Anti-Ghosting Edition</title>
     <style>
         :root {
             --card-w: 300px;
@@ -15,7 +15,7 @@
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
             --color-pink-trans: rgba(255, 182, 193, 0.6);
-            --anchor-y: 44px; /* 基準點：觸碰上頁 */
+            --anchor-y: 44px; 
         }
 
         body {
@@ -24,21 +24,23 @@
             perspective: 2500px; overflow: hidden; touch-action: none;
         }
 
-        /* 視角容器：陀螺儀將會控制這裡 */
         .viewport {
             width: var(--card-w); height: var(--card-h);
             transform-style: preserve-3d;
             transform: rotateX(30deg) rotateY(-30deg) scale(0.85);
             transition: transform 0.1s ease-out; 
+            /* 修正：增加整體抗鋸齒 */
+            -webkit-font-smoothing: antialiased;
         }
 
         .card-system { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
 
-        /* 下頁 */
+        /* 下頁：稍微往下壓一點 Z 軸，避免跟背景衝突 */
         .card-bottom {
             position: absolute; width: 100%; height: 100%;
             background: var(--color-pink-paper); border: 1px solid #f5c6cb;
             transform-style: preserve-3d;
+            transform: translateZ(-1px);
         }
 
         /* 上頁 (封面) */
@@ -54,57 +56,61 @@
         .face {
             position: absolute; width: 100%; height: 100%;
             backface-visibility: hidden; background-size: cover; background-position: center;
+            /* 修正：強制硬體加速，減少疊影 */
+            -webkit-transform-style: preserve-3d;
         }
 
-        /* 封面外側：套用紅玫瑰愛心圖 */
+        /* 封面外側 */
         .face.front { 
             background-image: url('roses_heart.jpg'); 
-            transform: rotateX(180deg); 
-            box-shadow: inset 0 0 40px rgba(0,0,0,0.2);
+            transform: rotateX(180deg) translateZ(2px); /* 增加厚度感知，避免與內側重疊 */
         }
 
+        /* 封面內側 */
         .face.back { 
             background: linear-gradient(var(--color-pink-trans), var(--color-pink-trans)), url('IMG_6831.png');
             background-blend-mode: overlay; background-size: cover;
-            transform-style: preserve-3d; 
+            transform: translateZ(1px);
         }
 
-        /* 立體結構模組 */
+        /* 立體結構：深藍頁 */
         .sub-deep-blue {
             position: absolute; left: 50%; top: var(--anchor-y); 
             width: var(--sub-w); height: var(--sub-h);
             background: rgba(52, 152, 219, 0.5); 
             transform-origin: top; 
-            transform: translateX(-50%) rotateX(0deg);
+            transform: translateX(-50%) rotateX(0deg) translateZ(5px); /* 抬升 Z 軸，脫離底座 */
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }
 
+        /* 立體結構：淺藍頁 */
         .sub-light-blue {
             position: absolute; top: 100%; left: 0; 
             width: 100%; height: var(--sub-h);
             background: rgba(133, 193, 233, 0.5); 
             transform-origin: top; 
-            transform: rotateX(180deg); 
+            transform: rotateX(180deg) translateZ(1px); 
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* 主圖位移 0px */
+        /* 主圖：增加與連桿的間隙 */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            transform: translateX(-50%) translateY(0px) rotateX(180deg) translateZ(3px);
+            /* 關鍵：translateZ(10px) 確保它永遠在連桿的最前方，不會產生疊影 */
+            transform: translateX(-50%) translateY(0px) rotateX(180deg) translateZ(10px);
             pointer-events: none;
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .main-img-attachment img {
             width: 100%; height: 100%; object-fit: contain; object-position: top; 
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
+            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5));
         }
 
-        .card-top.is-open ~ .sub-deep-blue { transform: translateX(-50%) rotateX(90deg); }
-        .card-top.is-open ~ .sub-deep-blue .sub-light-blue { transform: rotateX(90deg); }
+        .card-top.is-open ~ .sub-deep-blue { transform: translateX(-50%) rotateX(90deg) translateZ(5px); }
+        .card-top.is-open ~ .sub-deep-blue .sub-light-blue { transform: rotateX(90deg) translateZ(1px); }
 
     </style>
 </head>
@@ -136,20 +142,17 @@
             viewport.style.transform = `rotateX(${baseRotX + gyroX}deg) rotateY(${baseRotY + gyroY}deg) scale(${scale})`;
         }
 
-        // 手機 3D 轉動邏輯
         window.addEventListener('deviceorientation', (e) => {
             if (e.beta === null || e.gamma === null) return;
-            gyroX = (e.beta - 45) * 0.4; // 以 45 度為握持中心
+            gyroX = (e.beta - 45) * 0.4;
             gyroY = e.gamma * 0.4;
             updateTransform();
         });
 
-        // 點擊與拖動邏輯
         let isMoving = false, lastX = 0, lastY = 0;
         window.addEventListener('touchstart', (e) => {
             isMoving = false;
             lastX = e.touches[0].pageX; lastY = e.touches[0].pageY;
-            // iOS 權限請求引導
             if (typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission().catch(console.error);
             }
@@ -165,7 +168,6 @@
 
         window.addEventListener('touchend', () => { if (!isMoving) cover.classList.toggle('is-open'); });
 
-        // 滑鼠模擬
         let isDragging = false;
         window.addEventListener('mousedown', (e) => { isDragging = true; lastX = e.pageX; lastY = e.pageY; });
         window.addEventListener('mousemove', (e) => {
