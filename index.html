@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pop-up Book：隱藏驚喜版</title>
+    <title>Pop-up Book：結構回歸最終版</title>
     <style>
         :root {
             --card-w: 300px;
             --card-h: 200px;
+            /* 連桿尺寸減少 20% */
             --sub-w: 64px;
             --sub-h: 44px;
+            /* 主圖 1.5 倍尺寸 */
             --img-w: 210px; 
             --img-h: 150px;
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
             --color-pink-trans: rgba(255, 182, 193, 0.7);
-            --attach-y: 110px; 
+            /* 讓淺藍頁貼附在上頁最底部的轉軸處，達成最初版的視覺位置 */
+            --attach-y: 156px; 
         }
 
         body {
@@ -38,11 +41,11 @@
             transform-style: preserve-3d;
         }
 
-        /* 大卡上頁 (封面) */
+        /* 大卡上頁 */
         .card-top {
             position: absolute; bottom: 0; top: -100%; width: 100%; height: 100%;
             transform-origin: bottom; 
-            transform: rotateX(-179.9deg); /* 初始閉合 */
+            transform: rotateX(-179.9deg);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d; z-index: 10;
         }
@@ -53,22 +56,21 @@
             backface-visibility: hidden; background-size: cover; background-position: center;
         }
         .face.front { background-image: url('IMG_6829.png'); transform: rotateX(180deg); }
-        
-        /* 內側面：透明粉紅，主圖初始隱藏在此層之後 */
         .face.back { 
             background: linear-gradient(var(--color-pink-trans), var(--color-pink-trans)), url('IMG_6831.png');
             background-blend-mode: overlay; background-size: cover;
             transform-style: preserve-3d; 
         }
 
-        /* --- 連動結構：淺藍上邊貼附 --- */
+        /* --- 連桿結構：實現最初版的動作 --- */
+
         .sub-light-blue {
             position: absolute; 
             left: 50%; top: var(--attach-y);
             width: var(--sub-w); height: var(--sub-h);
             background: rgba(133, 193, 233, 0.6); 
             transform-origin: top;
-            /* 初始狀態：平貼封面，不被看見 */
+            /* 最初摺疊：貼在上頁上 */
             transform: translateX(-50%) rotateX(0deg); 
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
@@ -79,18 +81,18 @@
             width: 100%; height: var(--sub-h);
             background: rgba(52, 152, 219, 0.6);
             transform-origin: top;
+            /* 最初摺疊：與淺藍頁平行 */
             transform: rotateX(0deg);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }
 
-        /* 主圖附著點：修正初始角度實現隱藏效果 */
+        /* 主圖：掛在深藍頁上 */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            /* 初始：rotateX(180deg) 配合父層旋轉，使其背對觀眾藏在裡面 */
-            transform: translateX(-50%) rotateX(180deg) translateZ(1px);
-            transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
+            /* 關鍵：透過 rotateX(180deg) 保持最初版本的掛載方向 */
+            transform: translateX(-50%) rotateX(180deg) translateZ(2px);
             pointer-events: none;
         }
         .main-img-attachment img {
@@ -98,16 +100,17 @@
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
         }
 
-        /* --- 展開後的連動：轉出來面對觀眾 --- */
+        /* --- 翻轉過程與結果的補償邏輯 --- */
+        
         .is-open .sub-light-blue {
-            transform: translateX(-50%) rotateX(-90deg); /* 淺藍垂直離開封面 */
+            /* 淺藍頁向內折 90 度，緊貼翻開後的封面 */
+            transform: translateX(-50%) rotateX(-90deg); 
         }
+        
         .is-open .sub-deep-blue {
-            transform: rotateX(90deg); /* 深藍修正角度，讓主圖立起 */
-        }
-        /* 可選：增加圖片在展開時的微調角度，讓它更「正」 */
-        .is-open .main-img-attachment {
-            transform: translateX(-50%) rotateX(180deg) translateZ(5px);
+            /* 深藍頁向外折 90 度，補償封面的旋轉，使其最終「垂直於底座」 */
+            /* 這能讓主圖的呈現結果跟最初版本完全一樣 */
+            transform: rotateX(90deg); 
         }
 
     </style>
