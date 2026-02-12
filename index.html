@@ -11,13 +11,13 @@
             --card-w: 300px;
             --card-h: 200px;
             --sub-w: 64px;
-            --sub-h: 35px; /* 縮短支架長度，減少旋轉半徑，防止穿透 */
-            /* 主圖尺寸再縮小 5%：216px * 0.95 = 205px */
-            --img-w: 205px; 
-            --img-h: 154px; 
+            --sub-h: 38px; 
+            /* 主圖尺寸再次微調縮小 5%：205px * 0.95 = 195px */
+            --img-w: 195px; 
+            --img-h: 146px; 
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
-            --anchor-y: 65px; /* 調整掛點位置 */
+            --anchor-y: 60px; 
         }
 
         body {
@@ -39,7 +39,7 @@
             position: absolute; width: 100%; height: 100%;
             background: var(--color-pink-paper); 
             border: 1px solid #f5c6cb;
-            border-radius: 8px;
+            border-radius: 10px;
             transform-style: preserve-3d;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
@@ -56,7 +56,7 @@
         .face {
             position: absolute; width: 100%; height: 100%;
             backface-visibility: hidden; background-size: cover; background-position: center;
-            border-radius: 8px;
+            border-radius: 10px;
         }
 
         .face.front { 
@@ -72,7 +72,7 @@
         .sub-deep-blue {
             position: absolute; left: 50%; top: var(--anchor-y); 
             width: var(--sub-w); height: var(--sub-h);
-            background: rgba(52, 152, 219, 0.2); 
+            background: rgba(52, 152, 219, 0.15); 
             transform-origin: top; 
             transform: translateX(-50%) rotateX(0deg);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
@@ -82,20 +82,19 @@
         .sub-light-blue {
             position: absolute; top: 100%; left: 0; 
             width: 100%; height: var(--sub-h);
-            background: rgba(133, 193, 233, 0.2); 
+            background: rgba(133, 193, 233, 0.15); 
             transform-origin: top; 
             transform: rotateX(180deg); 
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }
 
-        /* 主圖立體板：縮小尺寸並大幅拉高 translateY */
+        /* 主圖立體板：修正方向 */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            /* translateY(-50px) 將圖片大幅向上提，解決底部穿越問題 */
-            /* translateZ(5px) 稍微往前推一點，增加層次感 */
-            transform: translateX(-50%) translateY(-50px) rotateX(180deg) translateZ(5px);
+            /* translateY 使用正數 20px 讓圖片往卡片上方提，遠離底紙 */
+            transform: translateX(-50%) translateY(20px) rotateX(180deg) translateZ(5px);
             pointer-events: none;
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             display: flex; justify-content: center; align-items: center;
@@ -103,7 +102,7 @@
 
         .main-img-attachment img {
             width: 100%; height: 100%; object-fit: contain;
-            filter: drop-shadow(0 8px 15px rgba(0,0,0,0.4));
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
         }
 
         .card-top.is-open ~ .sub-deep-blue { transform: translateX(-50%) rotateX(90deg); }
