@@ -2,16 +2,19 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Valentine Card for Serena</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Serena's Valentine App</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
         :root {
             --card-w: 300px;
             --card-h: 200px;
             --sub-w: 64px;
             --sub-h: 44px; 
-            --img-w: 240px; 
-            --img-h: 180px; 
+            /* 主圖尺寸縮小 5%：240px * 0.95 = 228px */
+            --img-w: 228px; 
+            --img-h: 171px; 
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
             --anchor-y: 44px; 
@@ -21,26 +24,26 @@
             display: flex; justify-content: center; align-items: center;
             height: 100vh; background-color: #1a1a1a; margin: 0;
             perspective: 2500px; overflow: hidden; touch-action: none;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         .viewport {
             width: var(--card-w); height: var(--card-h);
             transform-style: preserve-3d;
-            transform: rotateX(30deg) rotateY(-30deg) scale(0.85);
+            transform: rotateX(30deg) rotateY(-30deg) scale(0.9);
             transition: transform 0.1s ease-out; 
         }
 
         .card-system { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
 
-        /* 下頁底座 */
         .card-bottom {
             position: absolute; width: 100%; height: 100%;
             background: var(--color-pink-paper); 
             border: 1px solid #f5c6cb;
+            border-radius: 5px;
             transform-style: preserve-3d;
         }
 
-        /* 上頁 (封面) */
         .card-top {
             position: absolute; bottom: 0; top: -100%; width: 100%; height: 100%;
             transform-origin: bottom; 
@@ -53,25 +56,26 @@
         .face {
             position: absolute; width: 100%; height: 100%;
             backface-visibility: hidden; background-size: cover; background-position: center;
+            border-radius: 5px;
         }
 
-        /* 封面外側 (對應截圖: roses_heart.jpg) */
+        /* 封面外側 */
         .face.front { 
             background-image: url('roses_heart.jpg'); 
             transform: rotateX(180deg) translateZ(1px);
         }
 
-        /* 封面內側 (對應截圖: cover_inner.PNG) */
+        /* 封面內側：Happy Valentines Day for Serena */
         .face.back { 
             background-image: url('cover_inner.PNG');
             transform: translateZ(1px);
         }
 
-        /* 立體雙節機關 */
+        /* 雙節彈起機關 */
         .sub-deep-blue {
             position: absolute; left: 50%; top: var(--anchor-y); 
             width: var(--sub-w); height: var(--sub-h);
-            background: rgba(52, 152, 219, 0.4); 
+            background: rgba(52, 152, 219, 0.3); 
             transform-origin: top; 
             transform: translateX(-50%) rotateX(0deg);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
@@ -81,14 +85,14 @@
         .sub-light-blue {
             position: absolute; top: 100%; left: 0; 
             width: 100%; height: var(--sub-h);
-            background: rgba(133, 193, 233, 0.4); 
+            background: rgba(133, 193, 233, 0.3); 
             transform-origin: top; 
             transform: rotateX(180deg); 
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }
 
-        /* 主圖立體板 */
+        /* 主圖立體板 - 尺寸已縮小 */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
@@ -100,13 +104,17 @@
 
         .main-img-attachment img {
             width: 100%; height: 100%; object-fit: contain;
-            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5));
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
         }
 
-        /* 機關連動動作 */
         .card-top.is-open ~ .sub-deep-blue { transform: translateX(-50%) rotateX(90deg); }
         .card-top.is-open ~ .sub-deep-blue .sub-light-blue { transform: rotateX(90deg); }
 
+        /* App 提示說明 */
+        .hint {
+            position: fixed; bottom: 30px; color: rgba(255,255,255,0.5);
+            font-size: 12px; pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -121,12 +129,14 @@
             
             <div class="sub-deep-blue">
                 <div class="main-img-attachment">
-                    <img src="minnie.jpg" alt="Inner Decoration" onerror="this.style.border='1px solid red'">
+                    <img src="minnie.jpg" alt="Decoration">
                 </div>
                 <div class="sub-light-blue"></div>
             </div>
         </div>
     </div>
+
+    <div class="hint">點擊卡片開啟，傾斜手機旋轉視角</div>
 
     <script>
         const viewport = document.getElementById('viewport');
@@ -134,22 +144,23 @@
         let baseRotX = 30, baseRotY = -30, gyroX = 0, gyroY = 0;
 
         function updateTransform() {
-            viewport.style.transform = `rotateX(${baseRotX + gyroX}deg) rotateY(${baseRotY + gyroY}deg) scale(0.85)`;
+            viewport.style.transform = `rotateX(${baseRotX + gyroX}deg) rotateY(${baseRotY + gyroY}deg) scale(0.9)`;
         }
 
-        // 偵測裝置陀螺儀
+        // 手機陀螺儀監控
         window.addEventListener('deviceorientation', (e) => {
             if (e.beta === null) return;
-            gyroX = (e.beta - 45) * 0.4;
-            gyroY = e.gamma * 0.4;
+            gyroX = (e.beta - 45) * 0.3;
+            gyroY = e.gamma * 0.3;
             updateTransform();
         });
 
+        // 觸控互動：點擊開合，滑動轉動
         let isMoving = false, lastX = 0, lastY = 0;
         window.addEventListener('touchstart', (e) => {
             isMoving = false;
             lastX = e.touches[0].pageX; lastY = e.touches[0].pageY;
-            // 請求權限（iOS 必備）
+            // iOS 啟動權限請求
             if (typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission();
             }
@@ -163,7 +174,9 @@
             updateTransform();
         });
 
-        window.addEventListener('touchend', () => { if (!isMoving) cover.classList.toggle('is-open'); });
+        window.addEventListener('touchend', () => { 
+            if (!isMoving) cover.classList.toggle('is-open'); 
+        });
     </script>
 </body>
 </html>
