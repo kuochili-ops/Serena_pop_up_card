@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pop-up Book：完美對齊基準版</title>
+    <title>Pop-up Book：基準點校正完整版</title>
     <style>
         :root {
             --card-w: 300px;
             --card-h: 200px;
             --sub-w: 64px;
-            --sub-h: 44px; /* 連桿高度 */
+            --sub-h: 44px; /* 小卡連桿高度 */
             --img-w: 210px; 
             --img-h: 150px; /* 主圖高度 */
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
             --color-pink-trans: rgba(255, 182, 193, 0.6);
-            /* 物理基準點：等於連桿高度，確保觸碰上頁內側 */
+            /* 基準點：小卡離摺痕距離等於其高度，確保淺藍頁剛好碰觸上頁 */
             --anchor-y: 44px; 
         }
 
@@ -33,12 +33,14 @@
 
         .card-system { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
 
+        /* 大卡下頁 */
         .card-bottom {
             position: absolute; width: 100%; height: 100%;
             background: var(--color-pink-paper); border: 1px solid #f5c6cb;
             transform-style: preserve-3d;
         }
 
+        /* 大卡上頁 */
         .card-top {
             position: absolute; bottom: 0; top: -100%; width: 100%; height: 100%;
             transform-origin: bottom; 
@@ -59,7 +61,7 @@
             transform-style: preserve-3d; 
         }
 
-        /* --- 連桿結構 --- */
+        /* --- 小卡結構 (Module) --- */
         .sub-deep-blue {
             position: absolute; left: 50%; top: var(--anchor-y); 
             width: var(--sub-w); height: var(--sub-h);
@@ -79,15 +81,16 @@
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* --- 主圖精確對齊修正 --- */
+        /* --- 主圖 (Minnie) --- */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            /* 修正基準點：
-               使用 translateY(-104px) 將主圖往上提，
-               這讓主圖的底邊在深藍頁立起時，剛好與大卡下頁的表面切齊。
+            /* 基準點調整：
+               使用正值 translateY(106px) 將圖片往上抽回。
+               計算式：主圖高(150) - 深藍頁高(44) = 106。
+               這能讓主圖底邊剛好貼在下頁，不再穿越。
             */
-            transform: translateX(-50%) translateY(-104px) rotateX(180deg) translateZ(3px);
+            transform: translateX(-50%) translateY(106px) rotateX(180deg) translateZ(3px);
             pointer-events: none;
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -97,11 +100,12 @@
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
         }
 
-        /* --- 連動邏輯 --- */
+        /* --- 連動開合邏輯 --- */
         .card-top.is-open ~ .sub-deep-blue { 
             transform: translateX(-50%) rotateX(90deg); 
         }
         .card-top.is-open ~ .sub-deep-blue .sub-light-blue { 
+            /* 淺藍頁伸直 90 度，剛好碰觸上頁內側 */
             transform: rotateX(90deg); 
         }
 
