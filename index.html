@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pop-up Book：上頁轉軸貼附版</title>
+    <title>Pop-up Book：轉軸貼附與效果回歸版</title>
     <style>
         :root {
             --card-w: 300px;
@@ -15,8 +15,8 @@
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
             --color-pink-trans: rgba(255, 182, 193, 0.6);
-            /* 淺藍分頁黏在上頁的位置（距轉軸距離） */
-            --attach-dist: 60px; 
+            /* 淺藍分頁在上頁內側的黏貼位置 */
+            --attach-y: 120px; 
         }
 
         body {
@@ -39,10 +39,10 @@
             transform-style: preserve-3d;
         }
 
-        /* 上頁（封面） */
+        /* 大卡上頁 (封面) */
         .card-top {
             position: absolute; bottom: 0; top: -100%; width: 100%; height: 100%;
-            transform-origin: bottom; transform: rotateX(-179.9deg);
+            transform-origin: bottom; transform: rotateX(-180deg);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d; z-index: 10;
         }
@@ -54,43 +54,42 @@
         }
         .face.front { background-image: url('IMG_6829.png'); transform: rotateX(180deg); }
         
-        /* 上頁內襯：透明粉紅 */
+        /* 內側面：加上透明粉紅 */
         .face.back { 
             background: linear-gradient(var(--color-pink-trans), var(--color-pink-trans)), url('IMG_6831.png');
             background-blend-mode: overlay; background-size: cover;
             transform-style: preserve-3d; 
         }
 
-        /* --- 連桿結構：改為隸屬於上頁 --- */
+        /* --- 連動結構：淺藍上邊貼附 --- */
 
-        /* 淺藍分頁：現在它的頂邊固定在上頁內襯上，形成轉軸 */
         .sub-light-blue {
             position: absolute; 
-            left: 50%; bottom: var(--attach-dist); /* 位置改為相對於上頁底部（轉軸處） */
+            left: 50%; top: var(--attach-y); /* 貼附在上頁內側特定高度 */
             width: var(--sub-w); height: var(--sub-h);
-            background: rgba(133, 193, 233, 0.5); 
-            transform-origin: top; /* 頂邊作為旋轉軸 */
+            background: rgba(133, 193, 233, 0.6); 
+            transform-origin: top; /* 頂邊為轉軸 */
+            /* 初始摺疊狀態 */
             transform: translateX(-50%) rotateX(0deg); 
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }
 
-        /* 深藍板塊：現在是淺藍的子元素 */
         .sub-deep-blue {
             position: absolute; top: 100%; left: 0;
             width: 100%; height: var(--sub-h);
-            background: rgba(52, 152, 219, 0.5);
+            background: rgba(52, 152, 219, 0.6);
             transform-origin: top;
-            transform: rotateX(0deg); /* 初始平貼 */
+            transform: rotateX(0deg);
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }
 
-        /* 主圖：依然倒掛在深藍板塊上 */
+        /* 主圖：修正方向使其面對觀眾 */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            /* 修正角度以對應新的座標系 */
+            /* 這裡的 rotateX 需要補償封面的旋轉，使其在 90 度時保持垂直 */
             transform: translateX(-50%) rotateX(180deg) translateZ(2px);
             pointer-events: none;
         }
@@ -99,13 +98,16 @@
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
         }
 
-        /* --- 開啟時的連動角度調整 --- */
-        /* 當封面打開 90 度時，連桿向外彈出形成 V 型支撐 */
+        /* --- 關鍵連動邏輯 --- */
+        /* 當封面打開 90 度 (垂直) */
         .is-open .sub-light-blue {
-            transform: translateX(-50%) rotateX(-45deg); 
+            /* 淺藍往後折 90 度貼住封面 */
+            transform: translateX(-50%) rotateX(-90deg); 
         }
         .is-open .sub-deep-blue {
-            transform: rotateX(-90deg); /* 讓深藍板塊垂直於底座 */
+            /* 深藍往前折 90 度，剛好抵銷掉前面的旋轉，使其水平於底座但位置懸空 */
+            /* 為了呈現第一版「站立」的效果，調整為 90 度 */
+            transform: rotateX(90deg);
         }
 
     </style>
