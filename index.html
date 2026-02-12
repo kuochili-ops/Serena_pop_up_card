@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pop-up Book：物理空間修正版</title>
+    <title>Pop-up Book：幾何對齊版</title>
     <style>
         :root {
             --card-w: 300px;
             --card-h: 200px;
             --sub-w: 64px;
+            /* 淺藍頁與深藍頁的高度 */
             --sub-h: 44px;
             --img-w: 210px; 
             --img-h: 150px;
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
             --color-pink-trans: rgba(255, 182, 193, 0.6);
-            /* 關鍵：將立體結構往遠離摺痕的方向移動，預留支撐空間 */
-            /* 數值越大，離摺痕越遠，越不會穿透上頁 */
-            --anchor-y: 65px; 
+            /* 關鍵修正：當 anchor-y 等於 sub-h (44px) 時，
+               展開後的淺藍頁長度剛好會填滿到摺痕，進而觸碰上頁內側。 */
+            --anchor-y: 44px; 
         }
 
         body {
@@ -60,7 +61,7 @@
             transform-style: preserve-3d; 
         }
 
-        /* --- 立體結構模組 --- */
+        /* --- 連桿結構 --- */
         .sub-deep-blue {
             position: absolute; left: 50%; top: var(--anchor-y); 
             width: var(--sub-w); height: var(--sub-h);
@@ -71,7 +72,6 @@
             transform-style: preserve-3d;
         }
 
-        /* 淺藍頁：現在它有足夠的「退後」空間，不會再撞牆穿透 */
         .sub-light-blue {
             position: absolute; top: 100%; left: 0; 
             width: 100%; height: var(--sub-h);
@@ -84,8 +84,8 @@
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; 
             width: var(--img-w); height: var(--img-h);
-            /* translateY(-5px) 微調：讓底邊剛好壓在底座附近 */
-            transform: translateX(-50%) translateY(-5px) rotateX(180deg) translateZ(3px);
+            /* 調整位移讓底邊貼近底座 */
+            transform: translateX(-50%) translateY(-2px) rotateX(180deg) translateZ(3px);
             pointer-events: none;
         }
 
@@ -94,13 +94,12 @@
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
         }
 
-        /* --- 修正後的物理連動 --- */
+        /* --- 精確連動角度 --- */
         .card-top.is-open ~ .sub-deep-blue { 
-            /* 深藍立起至 90 度，因為離摺痕夠遠，所以不會撞到封面 */
             transform: translateX(-50%) rotateX(90deg); 
         }
         .card-top.is-open ~ .sub-deep-blue .sub-light-blue { 
-            /* 淺藍頁現在可以呈 90 度角平穩支撐在封面內側，不再穿越 */
+            /* 轉動 90 度，使其水平伸向摺痕，剛好碰觸到上頁內壁 */
             transform: rotateX(90deg); 
         }
 
@@ -129,10 +128,8 @@
     <script>
         const viewport = document.getElementById('viewport');
         const cover = document.getElementById('cover');
-        
         let rotX = 30, rotY = -30, scale = 0.85;
-        let lastTouchX = 0, lastTouchY = 0, lastDist = 0;
-        let isMoving = false;
+        let lastTouchX = 0, lastTouchY = 0, lastDist = 0, isMoving = false;
 
         function updateTransform() {
             viewport.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) scale(${scale})`;
