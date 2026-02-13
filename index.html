@@ -27,7 +27,6 @@
 
         body:active { cursor: grabbing; }
 
-        /* 音樂控制按鈕 */
         #music-toggle {
             position: fixed; top: 20px; right: 20px;
             width: 44px; height: 44px;
@@ -38,19 +37,27 @@
             display: flex; justify-content: center; align-items: center;
             font-size: 20px; color: white;
             z-index: 1000; cursor: pointer;
-            transition: transform 0.2s;
         }
 
         #youtube-player { position: absolute; width: 0; height: 0; pointer-events: none; opacity: 0; }
 
-        /* 漂浮愛心 */
-        .hearts-container { position: fixed; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        /* --- 飄落愛心容器 --- */
+        .hearts-container { 
+            position: fixed; width: 100%; height: 100%; 
+            pointer-events: none; z-index: 5; /* 低於卡片但高於背景 */
+            opacity: 0; 
+            transition: opacity 1s ease-in;
+        }
+        .hearts-container.active { opacity: 1; }
+
         .heart-particle {
             position: absolute; color: rgba(255, 105, 180, 0.4);
             font-size: 20px; animation: fall linear infinite;
         }
         @keyframes fall {
             0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
             100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
         }
 
@@ -64,7 +71,6 @@
 
         .card-system { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
 
-        /* 卡片下頁與文字內容 */
         .card-bottom {
             position: absolute; width: 100%; height: 100%;
             background: var(--color-pink-paper); 
@@ -80,9 +86,7 @@
             text-align: center; color: #d63384; 
             font-size: 16px; line-height: 1.6;
             font-weight: 500; letter-spacing: 1px;
-            opacity: 0.8;
             text-shadow: 1px 1px 1px rgba(255,255,255,0.5);
-            pointer-events: none;
         }
 
         .card-top {
@@ -102,7 +106,6 @@
         .face.front { background-image: url('roses_heart.jpg'); transform: rotateX(180deg) translateZ(1px); }
         .face.back { background-image: url('cover_inner.PNG'); transform: translateZ(1px); }
 
-        /* 支架 */
         .sub-deep-blue {
             position: absolute; left: 50%; top: var(--anchor-y); 
             width: var(--sub-w); height: var(--sub-h);
@@ -170,13 +173,14 @@
         </div>
     </div>
 
-    <div class="hint">Click to Open & Play • Drag to Rotate</div>
+    <div class="hint">Click to Open & Start Surprise • Drag to Rotate</div>
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
         let player;
         const toggleBtn = document.getElementById('music-toggle');
         const cover = document.getElementById('cover');
+        const heartsContainer = document.getElementById('hearts');
 
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('youtube-player', {
@@ -194,14 +198,23 @@
             }
         }
 
+        function toggleSurprise(isOpening) {
+            if (isOpening) {
+                playMusic();
+                heartsContainer.classList.add('active'); // 顯示愛心
+            } else {
+                heartsContainer.classList.remove('active'); // 隱藏愛心
+                if (player) { player.mute(); toggleBtn.innerHTML = '🔇'; }
+            }
+        }
+
         toggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (!player) return;
-            if (player.isMuted()) { playMusic(); } 
-            else { player.mute(); toggleBtn.innerHTML = '🔇'; }
+            if (player.isMuted()) { playMusic(); heartsContainer.classList.add('active'); } 
+            else { player.mute(); toggleBtn.innerHTML = '🔇'; heartsContainer.classList.remove('active'); }
         });
 
-        // 控制邏輯
         const viewport = document.getElementById('viewport');
         let baseRotX = 30, baseRotY = -30, gyroX = 0, gyroY = 0;
         let isDragging = false, lastX = 0, lastY = 0, moved = false;
@@ -212,15 +225,15 @@
 
         const startAction = (e) => {
             isDragging = true; moved = false;
-            lastX = e.pageX || e.touches[0].pageX;
-            lastY = e.pageY || e.touches[0].pageY;
+            lastX = e.pageX || (e.touches ? e.touches[0].pageX : 0);
+            lastY = e.pageY || (e.touches ? e.touches[0].pageY : 0);
         };
 
         const moveAction = (e) => {
             if (!isDragging) return;
             const currentX = e.pageX || (e.touches ? e.touches[0].pageX : 0);
             const currentY = e.pageY || (e.touches ? e.touches[0].pageY : 0);
-            if (Math.abs(currentX - lastX) > 2) moved = true;
+            if (Math.abs(currentX - lastX) > 3) moved = true;
             baseRotY += (currentX - lastX) * 0.4;
             baseRotX -= (currentY - lastY) * 0.4;
             lastX = currentX; lastY = currentY;
@@ -229,10 +242,9 @@
 
         const endAction = () => {
             if (isDragging && !moved) {
-                const opening = !cover.classList.contains('is-open');
+                const isOpening = !cover.classList.contains('is-open');
                 cover.classList.toggle('is-open');
-                // 關鍵：打開卡片時自動開啟音樂
-                if (opening) { playMusic(); }
+                toggleSurprise(isOpening); // 同步啟動音樂與愛心
             }
             isDragging = false;
         };
@@ -250,15 +262,15 @@
             updateTransform();
         });
 
+        // 預先產生愛心但不顯示
         function createHearts() {
-            const container = document.getElementById('hearts');
-            for(let i=0; i<15; i++) {
+            for(let i=0; i<20; i++) {
                 const heart = document.createElement('div');
                 heart.className = 'heart-particle'; heart.innerHTML = '❤';
                 heart.style.left = Math.random() * 100 + 'vw';
                 heart.style.animationDuration = (Math.random() * 3 + 4) + 's';
-                heart.style.animationDelay = Math.random() * 5 + 's';
-                container.appendChild(heart);
+                heart.style.animationDelay = (Math.random() * 5) + 's';
+                heartsContainer.appendChild(heart);
             }
         }
         createHearts();
