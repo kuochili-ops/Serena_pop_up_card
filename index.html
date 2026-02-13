@@ -43,19 +43,22 @@
 
         #youtube-player { position: absolute; width: 0; height: 0; pointer-events: none; opacity: 0; }
 
-        /* 飄落愛心容器 */
+        /* --- 混合元素容器 --- */
         .hearts-container { 
             position: fixed; width: 100%; height: 100%; 
             pointer-events: none; z-index: 5; 
             opacity: 0; 
-            transition: opacity 2s ease-in; /* 緩緩浮現 */
+            transition: opacity 2s ease-in;
         }
         .hearts-container.active { opacity: 1; }
 
-        .heart-particle {
-            position: absolute; color: rgba(255, 105, 180, 0.4);
-            font-size: 20px; animation: fall linear infinite;
+        .particle {
+            position: absolute;
+            animation: fall linear infinite;
+            pointer-events: none;
+            user-select: none;
         }
+
         @keyframes fall {
             0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
             10% { opacity: 1; }
@@ -63,6 +66,7 @@
             100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
         }
 
+        /* --- 3D 視圖與卡片結構 --- */
         .viewport {
             width: var(--card-w); height: var(--card-h);
             transform-style: preserve-3d;
@@ -180,7 +184,7 @@
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
         let player;
-        let hasOpened = false; // 記錄是否已經觸發過驚喜
+        let hasOpened = false;
         const toggleBtn = document.getElementById('music-toggle');
         const cover = document.getElementById('cover');
         const heartsContainer = document.getElementById('hearts');
@@ -195,33 +199,25 @@
             });
         }
 
-        // 啟動驚喜：音樂 + 愛心
         function startForeverSurprise() {
-            if (hasOpened) return; // 只執行一次
+            if (hasOpened) return;
             hasOpened = true;
-            
-            // 顯示音樂按鈕並開啟音樂
             toggleBtn.style.display = 'flex';
             if (player && player.isMuted()) {
                 player.unMute();
                 player.setVolume(50);
                 toggleBtn.innerHTML = '🔊';
             }
-            
-            // 開啟愛心飄落
             heartsContainer.classList.add('active');
         }
 
-        // 手動靜音鈕邏輯
         toggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (!player) return;
             if (player.isMuted()) {
-                player.unMute();
-                toggleBtn.innerHTML = '🔊';
+                player.unMute(); toggleBtn.innerHTML = '🔊';
             } else {
-                player.mute();
-                toggleBtn.innerHTML = '🔇';
+                player.mute(); toggleBtn.innerHTML = '🔇';
             }
         });
 
@@ -254,11 +250,7 @@
             if (isDragging && !moved) {
                 const isOpeningNow = !cover.classList.contains('is-open');
                 cover.classList.toggle('is-open');
-                
-                // 如果是第一次打開，啟動永恆驚喜
-                if (isOpeningNow) {
-                    startForeverSurprise();
-                }
+                if (isOpeningNow) startForeverSurprise();
             }
             isDragging = false;
         };
@@ -276,17 +268,26 @@
             updateTransform();
         });
 
-        function createHearts() {
-            for(let i=0; i<20; i++) {
-                const heart = document.createElement('div');
-                heart.className = 'heart-particle'; heart.innerHTML = '❤';
-                heart.style.left = Math.random() * 100 + 'vw';
-                heart.style.animationDuration = (Math.random() * 3 + 4) + 's';
-                heart.style.animationDelay = (Math.random() * 5) + 's';
-                heartsContainer.appendChild(heart);
+        // --- 產生多樣化飄落元素 ---
+        function createParticles() {
+            const symbols = ['❤', '🌹', '♫', '♪', '🌸', '💕'];
+            const colors = ['rgba(255, 105, 180, 0.4)', 'rgba(255, 50, 50, 0.4)', 'rgba(135, 206, 235, 0.4)', 'rgba(255, 182, 193, 0.4)'];
+            
+            for(let i=0; i<30; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.innerHTML = symbols[Math.floor(Math.random() * symbols.length)];
+                
+                p.style.left = Math.random() * 100 + 'vw';
+                p.style.fontSize = (Math.random() * 15 + 15) + 'px';
+                p.style.color = colors[Math.floor(Math.random() * colors.length)];
+                p.style.animationDuration = (Math.random() * 4 + 4) + 's';
+                p.style.animationDelay = (Math.random() * 8) + 's';
+                
+                heartsContainer.appendChild(p);
             }
         }
-        createHearts();
+        createParticles();
     </script>
 </body>
 </html>
