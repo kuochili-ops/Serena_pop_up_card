@@ -14,7 +14,8 @@
             --img-h: 146px; 
             --duration: 1.5s;
             --color-pink-paper: #ffe4e1;
-            --anchor-y: 38px; 
+            --anchor-y: 38px;
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body {
@@ -24,31 +25,22 @@
             font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
             cursor: grab;
         }
-        body:active { cursor: grabbing; }
 
-        /* 右上角靜音控制鈕 */
         #music-toggle {
             position: fixed; top: 20px; right: 20px;
             width: 50px; height: 50px;
             background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            display: none; 
-            justify-content: center; align-items: center;
-            font-size: 24px; color: white;
-            z-index: 9999; cursor: pointer;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%; display: none; justify-content: center; align-items: center;
+            font-size: 24px; color: white; z-index: 9999; cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            transition: transform 0.2s;
-            pointer-events: auto;
         }
 
-        #youtube-player { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+        #youtube-player { position: absolute; width: 1px; height: 1px; opacity: 0; }
 
         .decoration-container { 
             position: fixed; width: 100%; height: 100%; 
-            pointer-events: none; z-index: 5; 
-            opacity: 0; transition: opacity 2s ease-in;
+            pointer-events: none; z-index: 5; opacity: 0; transition: opacity 2s ease-in;
         }
         .decoration-container.active { opacity: 1; }
 
@@ -65,10 +57,11 @@
             transform-style: preserve-3d;
             transform: rotateX(30deg) rotateY(-30deg) scale(0.9);
             transition: transform 0.1s ease-out; z-index: 10;
-            pointer-events: none;
         }
+
         .card-system { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
 
+        /* 底層卡片 */
         .card-bottom {
             position: absolute; width: 100%; height: 100%;
             background: var(--color-pink-paper); 
@@ -78,18 +71,19 @@
             display: flex; flex-direction: column;
             justify-content: flex-end; align-items: center;
             padding-bottom: 25px; box-sizing: border-box;
+            z-index: 1;
         }
 
         .message-area {
             text-align: center; color: #d63384; font-size: 17px; line-height: 1.7;
-            font-weight: 600; letter-spacing: 1px;
-            text-shadow: 1px 1px 1px rgba(255,255,255,0.6);
+            font-weight: 600; text-shadow: 1px 1px 1px rgba(255,255,255,0.6);
         }
 
+        /* 封面頁：立牌現在嵌套在裡面 */
         .card-top {
-            position: absolute; bottom: 0; top: -100%; width: 100%; height: 100%;
+            position: absolute; bottom: 0; width: 100%; height: 100%;
             transform-origin: bottom; transform: rotateX(-179.9deg);
-            transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform var(--duration) var(--ease);
             transform-style: preserve-3d; z-index: 20;
         }
         .card-top.is-open { transform: rotateX(-90deg); }
@@ -99,24 +93,32 @@
             backface-visibility: hidden; background-size: cover; background-position: center;
             border-radius: 10px;
         }
-        .face.front { background-image: url('roses_heart.jpg'); transform: rotateX(180deg) translateZ(1px); }
-        .face.back { background-image: url('cover_inner.PNG'); transform: translateZ(1px); }
+        .face.front { background-image: url('roses_heart.jpg'); transform: rotateX(180deg); }
+        .face.back { background-image: url('cover_inner.PNG'); }
 
+        /* 同步機構：立牌支架 */
         .sub-deep-blue {
             position: absolute; left: 50%; top: var(--anchor-y); 
             width: var(--sub-w); height: var(--sub-h);
-            background: rgba(52, 152, 219, 0.2); transform-origin: top; 
+            background: rgba(52, 152, 219, 0.1); transform-origin: top; 
+            /* 這裡的旋轉是相對於 .card-top 的反向抵消 */
             transform: translateX(-50%) rotateX(0deg);
-            transition: transform var(--duration) ease-out; transform-style: preserve-3d;
+            transition: transform var(--duration) var(--ease); transform-style: preserve-3d;
         }
+
         .sub-light-blue {
             position: absolute; top: 100%; left: 0; width: 100%; height: var(--sub-h);
-            background: rgba(133, 193, 233, 0.2); transform-origin: top; 
-            transform: rotateX(180deg); transition: transform var(--duration) ease-out; transform-style: preserve-3d;
+            background: rgba(133, 193, 233, 0.1); transform-origin: top; 
+            transform: rotateX(180deg); transition: transform var(--duration) var(--ease); 
+            transform-style: preserve-3d;
         }
+
+        /* 主圖立牌 */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; width: var(--img-w); height: var(--img-h);
-            transform: translateX(-50%) translateY(0px) rotateX(180deg) translateZ(5px);
+            /* 修正初始角度，確保不穿過封面 */
+            transform: translateX(-50%) rotateX(180deg) translateZ(2px);
+            transition: transform var(--duration) var(--ease);
             display: flex; justify-content: center; align-items: center;
         }
         .main-img-attachment img {
@@ -124,8 +126,10 @@
             filter: drop-shadow(0 15px 30px rgba(0,0,0,0.5));
         }
 
-        .card-top.is-open ~ .sub-deep-blue { transform: translateX(-50%) rotateX(90deg); }
-        .card-top.is-open ~ .sub-deep-blue .sub-light-blue { transform: rotateX(90deg); }
+        /* 狀態切換時的精確抵消動作 */
+        .card-top.is-open .sub-deep-blue { transform: translateX(-50%) rotateX(180deg); }
+        .card-top.is-open .sub-light-blue { transform: rotateX(-90deg); }
+        .card-top.is-open .main-img-attachment { transform: translateX(-50%) rotateX(180deg) translateZ(2px); }
 
         .hint {
             position: fixed; bottom: 40px; color: rgba(255,255,255,0.4);
@@ -142,30 +146,30 @@
     <div class="viewport" id="viewport">
         <div class="card-system">
             <div class="card-bottom">
-                <div class="message-area">
-                    祝美麗的文涵妹妹<br>
-                    青春永駐<br><br>
-                    <small>資深愛慕者</small>
-                </div>
+                <div class="message-area">祝美麗的文涵妹妹<br>青春永駐<br><br><small>資深愛慕者</small></div>
             </div>
+            
             <div class="card-top" id="cover">
                 <div class="face front"></div>
                 <div class="face back"></div>
-            </div>
-            <div class="sub-deep-blue">
-                <div class="main-img-attachment"><img src="minnie.jpg" alt="Minnie"></div>
-                <div class="sub-light-blue"></div>
+                
+                <div class="sub-deep-blue">
+                    <div class="main-img-attachment">
+                        <img src="minnie.jpg" alt="Minnie">
+                    </div>
+                    <div class="sub-light-blue"></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="hint">Click to Open the Surprise • Drag to Rotate</div>
+    <div class="hint">Click to Open & Start Surprise • Drag to Rotate</div>
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
         let player;
         let hasTriggered = false;
-        let isMuted = false; 
+        let isMuted = false;
         const toggleBtn = document.getElementById('music-toggle');
         const cover = document.getElementById('cover');
         const decorContainer = document.getElementById('decorations');
@@ -174,13 +178,8 @@
             player = new YT.Player('youtube-player', {
                 playerVars: {
                     'listType': 'playlist',
-                    'list': 'PL1U2BLQmiBsfNlI57Ph5J1m19By6Jn-Hn', // 你的播放清單 ID
-                    'autoplay': 1,
-                    'loop': 1,
-                    'controls': 0,
-                    'showinfo': 0,
-                    'modestbranding': 1,
-                    'mute': 1
+                    'list': 'PL1U2BLQmiBsfNlI57Ph5J1m19By6Jn-Hn',
+                    'autoplay': 1, 'loop': 1, 'controls': 0, 'showinfo': 0, 'modestbranding': 1, 'mute': 1
                 },
                 events: { 'onReady': (e) => e.target.playVideo() }
             });
@@ -192,28 +191,19 @@
             toggleBtn.style.display = 'flex';
             decorContainer.classList.add('active');
             if (player) {
-                player.unMute();
-                player.setVolume(50);
-                isMuted = false;
-                toggleBtn.innerHTML = '🔊';
+                player.unMute(); player.setVolume(50);
+                isMuted = false; toggleBtn.innerHTML = '🔊';
             }
         }
 
         toggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (!player) return;
-            if (isMuted) {
-                player.unMute(); player.setVolume(50);
-                toggleBtn.innerHTML = '🔊';
-                isMuted = false;
-            } else {
-                player.mute(); player.setVolume(0);
-                toggleBtn.innerHTML = '🔇';
-                isMuted = true;
-            }
+            isMuted = !isMuted;
+            if (isMuted) { player.mute(); player.setVolume(0); toggleBtn.innerHTML = '🔇'; }
+            else { player.unMute(); player.setVolume(50); toggleBtn.innerHTML = '🔊'; }
         });
 
-        // 3D 旋轉與點擊邏輯
         const viewport = document.getElementById('viewport');
         let baseRotX = 30, baseRotY = -30, gyroX = 0, gyroY = 0;
         let isDragging = false, lastX = 0, lastY = 0, moved = false;
@@ -233,7 +223,7 @@
             if (!isDragging) return;
             const currentX = e.pageX || (e.touches ? e.touches[0].pageX : 0);
             const currentY = e.pageY || (e.touches ? e.touches[0].pageY : 0);
-            if (Math.abs(currentX - lastX) > 3 || Math.abs(currentY - lastY) > 3) moved = true;
+            if (Math.abs(currentX - lastX) > 3) moved = true;
             baseRotY += (currentX - lastX) * 0.4;
             baseRotX -= (currentY - lastY) * 0.4;
             lastX = currentX; lastY = currentY;
@@ -267,8 +257,7 @@
             const colors = ['rgba(255,105,180,0.5)', 'rgba(255,50,50,0.5)', 'rgba(255,182,193,0.5)', 'rgba(173,216,230,0.5)'];
             for(let i=0; i<35; i++) {
                 const p = document.createElement('div');
-                p.className = 'particle';
-                p.innerHTML = symbols[Math.floor(Math.random() * symbols.length)];
+                p.className = 'particle'; p.innerHTML = symbols[Math.floor(Math.random() * symbols.length)];
                 p.style.left = Math.random() * 100 + 'vw';
                 p.style.fontSize = (Math.random() * 15 + 15) + 'px';
                 p.style.color = colors[Math.floor(Math.random() * colors.length)];
