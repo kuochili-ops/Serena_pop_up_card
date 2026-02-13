@@ -27,6 +27,7 @@
 
         body:active { cursor: grabbing; }
 
+        /* 右上角靜音控制 */
         #music-toggle {
             position: fixed; top: 20px; right: 20px;
             width: 44px; height: 44px;
@@ -37,16 +38,17 @@
             display: flex; justify-content: center; align-items: center;
             font-size: 20px; color: white;
             z-index: 1000; cursor: pointer;
+            transition: transform 0.2s;
         }
 
         #youtube-player { position: absolute; width: 0; height: 0; pointer-events: none; opacity: 0; }
 
-        /* --- 飄落愛心容器 --- */
+        /* 飄落愛心容器 */
         .hearts-container { 
             position: fixed; width: 100%; height: 100%; 
-            pointer-events: none; z-index: 5; /* 低於卡片但高於背景 */
+            pointer-events: none; z-index: 5; 
             opacity: 0; 
-            transition: opacity 1s ease-in;
+            transition: opacity 2s ease-in; /* 緩緩浮現 */
         }
         .hearts-container.active { opacity: 1; }
 
@@ -146,7 +148,7 @@
 </head>
 <body>
 
-    <div id="music-toggle">🔇</div>
+    <div id="music-toggle" style="display: none;">🔇</div>
     <div id="youtube-player"></div>
     <div class="hearts-container" id="hearts"></div>
 
@@ -178,6 +180,7 @@
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
         let player;
+        let hasOpened = false; // 記錄是否已經觸發過驚喜
         const toggleBtn = document.getElementById('music-toggle');
         const cover = document.getElementById('cover');
         const heartsContainer = document.getElementById('hearts');
@@ -192,27 +195,34 @@
             });
         }
 
-        function playMusic() {
+        // 啟動驚喜：音樂 + 愛心
+        function startForeverSurprise() {
+            if (hasOpened) return; // 只執行一次
+            hasOpened = true;
+            
+            // 顯示音樂按鈕並開啟音樂
+            toggleBtn.style.display = 'flex';
             if (player && player.isMuted()) {
-                player.unMute(); player.setVolume(50); toggleBtn.innerHTML = '🔊';
+                player.unMute();
+                player.setVolume(50);
+                toggleBtn.innerHTML = '🔊';
             }
+            
+            // 開啟愛心飄落
+            heartsContainer.classList.add('active');
         }
 
-        function toggleSurprise(isOpening) {
-            if (isOpening) {
-                playMusic();
-                heartsContainer.classList.add('active'); // 顯示愛心
-            } else {
-                heartsContainer.classList.remove('active'); // 隱藏愛心
-                if (player) { player.mute(); toggleBtn.innerHTML = '🔇'; }
-            }
-        }
-
+        // 手動靜音鈕邏輯
         toggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (!player) return;
-            if (player.isMuted()) { playMusic(); heartsContainer.classList.add('active'); } 
-            else { player.mute(); toggleBtn.innerHTML = '🔇'; heartsContainer.classList.remove('active'); }
+            if (player.isMuted()) {
+                player.unMute();
+                toggleBtn.innerHTML = '🔊';
+            } else {
+                player.mute();
+                toggleBtn.innerHTML = '🔇';
+            }
         });
 
         const viewport = document.getElementById('viewport');
@@ -242,9 +252,13 @@
 
         const endAction = () => {
             if (isDragging && !moved) {
-                const isOpening = !cover.classList.contains('is-open');
+                const isOpeningNow = !cover.classList.contains('is-open');
                 cover.classList.toggle('is-open');
-                toggleSurprise(isOpening); // 同步啟動音樂與愛心
+                
+                // 如果是第一次打開，啟動永恆驚喜
+                if (isOpeningNow) {
+                    startForeverSurprise();
+                }
             }
             isDragging = false;
         };
@@ -262,7 +276,6 @@
             updateTransform();
         });
 
-        // 預先產生愛心但不顯示
         function createHearts() {
             for(let i=0; i<20; i++) {
                 const heart = document.createElement('div');
