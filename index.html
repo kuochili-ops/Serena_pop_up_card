@@ -12,10 +12,12 @@
             --sub-h: 38px; 
             --img-w: 195px; 
             --img-h: 146px; 
-            --duration: 1.5s;
+            --duration: 1.6s; /* 微調總時長 */
             --color-pink-paper: #ffe4e1;
-            --anchor-y: 38px;
-            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+            --anchor-y: 38px; 
+            /* 使用更平滑的加速曲線，讓啟動時封面先走，立牌隨後快速跟上 */
+            --ease-top: cubic-bezier(0.4, 0, 0.2, 1);
+            --ease-pop: cubic-bezier(0.3, 0, 0.1, 1); 
         }
 
         body {
@@ -27,13 +29,11 @@
         }
 
         #music-toggle {
-            position: fixed; top: 20px; right: 20px;
-            width: 50px; height: 50px;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%; display: none; justify-content: center; align-items: center;
+            position: fixed; top: 20px; right: 20px; width: 50px; height: 50px;
+            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 50%;
+            display: none; justify-content: center; align-items: center;
             font-size: 24px; color: white; z-index: 9999; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
         }
 
         #youtube-player { position: absolute; width: 1px; height: 1px; opacity: 0; }
@@ -48,7 +48,6 @@
         @keyframes fall {
             0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
             10% { opacity: 1; }
-            90% { opacity: 1; }
             100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
         }
 
@@ -61,7 +60,7 @@
 
         .card-system { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
 
-        /* 底層卡片 */
+        /* 底座 */
         .card-bottom {
             position: absolute; width: 100%; height: 100%;
             background: var(--color-pink-paper); 
@@ -71,7 +70,6 @@
             display: flex; flex-direction: column;
             justify-content: flex-end; align-items: center;
             padding-bottom: 25px; box-sizing: border-box;
-            z-index: 1;
         }
 
         .message-area {
@@ -79,11 +77,12 @@
             font-weight: 600; text-shadow: 1px 1px 1px rgba(255,255,255,0.6);
         }
 
-        /* 封面頁：立牌現在嵌套在裡面 */
+        /* 封面頁 (上蓋) */
         .card-top {
             position: absolute; bottom: 0; width: 100%; height: 100%;
-            transform-origin: bottom; transform: rotateX(-179.9deg);
-            transition: transform var(--duration) var(--ease);
+            transform-origin: bottom; 
+            transform: rotateX(-179.9deg);
+            transition: transform var(--duration) var(--ease-top);
             transform-style: preserve-3d; z-index: 20;
         }
         .card-top.is-open { transform: rotateX(-90deg); }
@@ -93,43 +92,43 @@
             backface-visibility: hidden; background-size: cover; background-position: center;
             border-radius: 10px;
         }
-        .face.front { background-image: url('roses_heart.jpg'); transform: rotateX(180deg); }
-        .face.back { background-image: url('cover_inner.PNG'); }
+        .face.front { background-image: url('roses_heart.jpg'); transform: rotateX(180deg) translateZ(1px); }
+        .face.back { background-image: url('cover_inner.PNG'); transform: translateZ(1px); }
 
-        /* 同步機構：立牌支架 */
+        /* --- 立牌連動機構 --- */
         .sub-deep-blue {
             position: absolute; left: 50%; top: var(--anchor-y); 
             width: var(--sub-w); height: var(--sub-h);
             background: rgba(52, 152, 219, 0.1); transform-origin: top; 
-            /* 這裡的旋轉是相對於 .card-top 的反向抵消 */
             transform: translateX(-50%) rotateX(0deg);
-            transition: transform var(--duration) var(--ease); transform-style: preserve-3d;
+            /* 讓支架的旋轉速度略快於封面，減少穿透感 */
+            transition: transform calc(var(--duration) * 0.9) var(--ease-pop); 
+            transform-style: preserve-3d;
         }
 
         .sub-light-blue {
             position: absolute; top: 100%; left: 0; width: 100%; height: var(--sub-h);
             background: rgba(133, 193, 233, 0.1); transform-origin: top; 
-            transform: rotateX(180deg); transition: transform var(--duration) var(--ease); 
+            transform: rotateX(180deg); 
+            transition: transform calc(var(--duration) * 0.9) var(--ease-pop); 
             transform-style: preserve-3d;
         }
 
-        /* 主圖立牌 */
         .main-img-attachment {
             position: absolute; left: 50%; top: 0; width: var(--img-w); height: var(--img-h);
-            /* 修正初始角度，確保不穿過封面 */
-            transform: translateX(-50%) rotateX(180deg) translateZ(2px);
-            transition: transform var(--duration) var(--ease);
+            /* 增加 translateZ(5px) 讓它在運動過程中始終保持在封面之上 */
+            transform: translateX(-50%) translateY(0px) rotateX(180deg) translateZ(5px);
             display: flex; justify-content: center; align-items: center;
+            transition: transform calc(var(--duration) * 0.9) var(--ease-pop);
         }
         .main-img-attachment img {
             width: 100%; height: 100%; object-fit: contain;
             filter: drop-shadow(0 15px 30px rgba(0,0,0,0.5));
         }
 
-        /* 狀態切換時的精確抵消動作 */
-        .card-top.is-open .sub-deep-blue { transform: translateX(-50%) rotateX(180deg); }
-        .card-top.is-open .sub-light-blue { transform: rotateX(-90deg); }
-        .card-top.is-open .main-img-attachment { transform: translateX(-50%) rotateX(180deg) translateZ(2px); }
+        /* 開啟時的目標角度 */
+        .card-top.is-open .sub-deep-blue { transform: translateX(-50%) rotateX(90deg); }
+        .card-top.is-open .sub-deep-blue .sub-light-blue { transform: rotateX(90deg); }
 
         .hint {
             position: fixed; bottom: 40px; color: rgba(255,255,255,0.4);
@@ -163,24 +162,16 @@
         </div>
     </div>
 
-    <div class="hint">Click to Open & Start Surprise • Drag to Rotate</div>
+    <div class="hint">Click to Open the Surprise • Drag to Rotate</div>
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
-        let player;
-        let hasTriggered = false;
-        let isMuted = false;
-        const toggleBtn = document.getElementById('music-toggle');
-        const cover = document.getElementById('cover');
-        const decorContainer = document.getElementById('decorations');
+        let player, hasTriggered = false, isMuted = false;
+        const toggleBtn = document.getElementById('music-toggle'), cover = document.getElementById('cover'), decorContainer = document.getElementById('decorations');
 
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('youtube-player', {
-                playerVars: {
-                    'listType': 'playlist',
-                    'list': 'PL1U2BLQmiBsfNlI57Ph5J1m19By6Jn-Hn',
-                    'autoplay': 1, 'loop': 1, 'controls': 0, 'showinfo': 0, 'modestbranding': 1, 'mute': 1
-                },
+                playerVars: { 'listType': 'playlist', 'list': 'PL1U2BLQmiBsfNlI57Ph5J1m19By6Jn-Hn', 'autoplay': 1, 'loop': 1, 'controls': 0, 'mute': 1 },
                 events: { 'onReady': (e) => e.target.playVideo() }
             });
         }
@@ -190,51 +181,34 @@
             hasTriggered = true;
             toggleBtn.style.display = 'flex';
             decorContainer.classList.add('active');
-            if (player) {
-                player.unMute(); player.setVolume(50);
-                isMuted = false; toggleBtn.innerHTML = '🔊';
-            }
+            if (player) { player.unMute(); player.setVolume(50); isMuted = false; toggleBtn.innerHTML = '🔊'; }
         }
 
         toggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (!player) return;
             isMuted = !isMuted;
-            if (isMuted) { player.mute(); player.setVolume(0); toggleBtn.innerHTML = '🔇'; }
-            else { player.unMute(); player.setVolume(50); toggleBtn.innerHTML = '🔊'; }
+            if (isMuted) { player.mute(); toggleBtn.innerHTML = '🔇'; }
+            else { player.unMute(); toggleBtn.innerHTML = '🔊'; }
         });
 
         const viewport = document.getElementById('viewport');
-        let baseRotX = 30, baseRotY = -30, gyroX = 0, gyroY = 0;
-        let isDragging = false, lastX = 0, lastY = 0, moved = false;
+        let baseRotX = 30, baseRotY = -30, isDragging = false, lastX = 0, lastY = 0, moved = false;
 
-        function updateTransform() {
-            viewport.style.transform = `rotateX(${baseRotX + gyroX}deg) rotateY(${baseRotY + gyroY}deg) scale(0.9)`;
-        }
+        function updateTransform() { viewport.style.transform = `rotateX(${baseRotX}deg) rotateY(${baseRotY}deg) scale(0.9)`; }
 
-        const startAction = (e) => {
-            if (e.target.id === 'music-toggle') return;
-            isDragging = true; moved = false;
-            lastX = e.pageX || (e.touches ? e.touches[0].pageX : 0);
-            lastY = e.pageY || (e.touches ? e.touches[0].pageY : 0);
-        };
-
+        const startAction = (e) => { if(e.target.id==='music-toggle')return; isDragging=true; moved=false; lastX=e.pageX || e.touches[0].pageX; lastY=e.pageY || e.touches[0].pageY; };
         const moveAction = (e) => {
             if (!isDragging) return;
-            const currentX = e.pageX || (e.touches ? e.touches[0].pageX : 0);
-            const currentY = e.pageY || (e.touches ? e.touches[0].pageY : 0);
-            if (Math.abs(currentX - lastX) > 3) moved = true;
-            baseRotY += (currentX - lastX) * 0.4;
-            baseRotX -= (currentY - lastY) * 0.4;
-            lastX = currentX; lastY = currentY;
-            updateTransform();
+            const curX = e.pageX || e.touches[0].pageX; const curY = e.pageY || e.touches[0].pageY;
+            if (Math.abs(curX - lastX) > 3) moved = true;
+            baseRotY += (curX - lastX) * 0.4; baseRotX -= (curY - lastY) * 0.4;
+            lastX = curX; lastY = curY; updateTransform();
         };
-
         const endAction = () => {
             if (isDragging && !moved) {
-                const isOpeningNow = !cover.classList.contains('is-open');
+                const isOpening = !cover.classList.contains('is-open');
                 cover.classList.toggle('is-open');
-                if (isOpeningNow) triggerSurprise();
+                if (isOpening) triggerSurprise();
             }
             isDragging = false;
         };
@@ -246,23 +220,14 @@
         window.addEventListener('touchmove', moveAction, {passive: false});
         window.addEventListener('touchend', endAction);
 
-        window.addEventListener('deviceorientation', (e) => {
-            if (e.beta === null) return;
-            gyroX = (e.beta - 45) * 0.3; gyroY = e.gamma * 0.3;
-            updateTransform();
-        });
-
         function createParticles() {
-            const symbols = ['❤', '🌹', '♫', '♪', '🌸', '💕'];
-            const colors = ['rgba(255,105,180,0.5)', 'rgba(255,50,50,0.5)', 'rgba(255,182,193,0.5)', 'rgba(173,216,230,0.5)'];
+            const symbols = ['❤', '🌹', '♫', '♪', '🌸'];
             for(let i=0; i<35; i++) {
                 const p = document.createElement('div');
                 p.className = 'particle'; p.innerHTML = symbols[Math.floor(Math.random() * symbols.length)];
-                p.style.left = Math.random() * 100 + 'vw';
-                p.style.fontSize = (Math.random() * 15 + 15) + 'px';
-                p.style.color = colors[Math.floor(Math.random() * colors.length)];
-                p.style.animationDuration = (Math.random() * 5 + 4) + 's';
-                p.style.animationDelay = (Math.random() * 10) + 's';
+                p.style.left = Math.random() * 100 + 'vw'; p.style.fontSize = (Math.random() * 15 + 15) + 'px';
+                p.style.color = 'rgba(255,182,193,0.6)'; p.style.animationDuration = (Math.random() * 5 + 4) + 's';
+                p.style.animationDelay = (Math.random() * 5) + 's';
                 decorContainer.appendChild(p);
             }
         }
