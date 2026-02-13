@@ -12,19 +12,27 @@
             --sub-h: 38px; 
             --img-w: 195px; 
             --img-h: 146px; 
-            --duration: 0.8s; /* 初始開啟速度：較快 */
+            --duration: 0.8s;
             --color-pink-paper: #ffe4e1;
             --anchor-y: 38px; 
         }
 
+        /* 關鍵：禁用所有預設手勢行為 */
+        * {
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
             display: flex; justify-content: center; align-items: center;
-            height: 100vh; background: radial-gradient(circle, #2c1a1a 0%, #1a1a1a 100%);
-            margin: 0; perspective: 2500px; overflow: hidden;
+            height: 100vh; width: 100vw;
+            background: radial-gradient(circle, #2c1a1a 0%, #1a1a1a 100%);
+            margin: 0; perspective: 2500px; 
+            overflow: hidden; /* 防止滾動頁面 */
+            position: fixed; /* 徹底固定位置 */
             font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
             cursor: grab;
         }
-        body:active { cursor: grabbing; }
 
         #music-toggle {
             position: fixed; top: 20px; right: 20px;
@@ -35,6 +43,7 @@
             justify-content: center; align-items: center;
             font-size: 24px; color: white; z-index: 9999; cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            touch-action: auto; /* 允許按鈕被點擊 */
         }
 
         #youtube-player { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
@@ -80,7 +89,6 @@
         .card-top {
             position: absolute; bottom: 0; top: -100%; width: 100%; height: 100%;
             transform-origin: bottom; transform: rotateX(-179.9deg);
-            /* 使用動態的 duration */
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d; z-index: 20;
         }
@@ -99,7 +107,6 @@
             width: var(--sub-w); height: var(--sub-h);
             background: rgba(52, 152, 219, 0.2); transform-origin: top; 
             transform: translateX(-50%) rotateX(0deg);
-            /* 立牌速度與封面保持一致連動 */
             transition: transform var(--duration) cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d;
         }
         .sub-light-blue {
@@ -119,7 +126,7 @@
 
         .hint {
             position: fixed; bottom: 40px; color: rgba(255,255,255,0.4);
-            font-size: 13px; pointer-events: none; z-index: 100;
+            font-size: 13px; pointer-events: none; z-index: 100; width: 100%; text-align: center;
         }
     </style>
 </head>
@@ -145,7 +152,7 @@
         </div>
     </div>
 
-    <div class="hint">Click to Open/Close Surprise • Drag to Rotate</div>
+    <div class="hint">Tap to Open • Drag to Rotate</div>
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
@@ -182,6 +189,7 @@
 
         function updateTransform() { viewport.style.transform = `rotateX(${baseRotX}deg) rotateY(${baseRotY}deg) scale(0.9)`; }
 
+        // 旋轉邏輯：加入 preventDefault() 防止頁面位移
         const startAction = (e) => {
             if (e.target.id === 'music-toggle') return;
             isDragging = true; moved = false;
@@ -191,24 +199,22 @@
 
         const moveAction = (e) => {
             if (!isDragging) return;
+            if (e.cancelable) e.preventDefault(); // 核心：阻止手機頁面捲動
             const curX = e.pageX || (e.touches ? e.touches[0].pageX : 0);
             const curY = e.pageY || (e.touches ? e.touches[0].pageY : 0);
-            if (Math.abs(curX - lastX) > 3) moved = true;
+            if (Math.abs(curX - lastX) > 2) moved = true;
             baseRotY += (curX - lastX) * 0.4; baseRotX -= (curY - lastY) * 0.4;
             lastX = curX; lastY = curY; updateTransform();
         };
 
-        const endAction = () => {
+        const endAction = (e) => {
             if (isDragging && !moved) {
                 const isOpeningNow = !cover.classList.contains('is-open');
-                
                 if (isOpeningNow) {
-                    // 開啟時：設定較快的速度 (0.8s)
                     root.style.setProperty('--duration', '0.8s');
                     cover.classList.add('is-open');
                     triggerSurprise();
                 } else {
-                    // 闔起時：設定較慢的速度 (2.0s)
                     root.style.setProperty('--duration', '2.0s');
                     cover.classList.remove('is-open');
                 }
@@ -216,12 +222,13 @@
             isDragging = false;
         };
 
+        // 綁定事件並設定 passive: false 以允許使用 preventDefault
         window.addEventListener('mousedown', startAction);
         window.addEventListener('mousemove', moveAction);
         window.addEventListener('mouseup', endAction);
         window.addEventListener('touchstart', startAction, {passive: false});
         window.addEventListener('touchmove', moveAction, {passive: false});
-        window.addEventListener('touchend', endAction);
+        window.addEventListener('touchend', endAction, {passive: false});
 
         function createParticles() {
             const symbols = ['❤', '🌹', '♫', '♪', '🌸', '💕'];
