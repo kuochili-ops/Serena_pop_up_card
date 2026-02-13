@@ -34,20 +34,17 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            display: none; /* 初始隱藏，開啟卡片後出現 */
+            display: none; 
             justify-content: center; align-items: center;
             font-size: 24px; color: white;
             z-index: 9999; cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            transition: transform 0.2s, background 0.2s;
+            transition: transform 0.2s;
             pointer-events: auto;
         }
-        #music-toggle:active { transform: scale(0.9); }
 
-        /* YouTube 隱藏容器 */
         #youtube-player { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
-        /* 混合元素飄落容器 */
         .decoration-container { 
             position: fixed; width: 100%; height: 100%; 
             pointer-events: none; z-index: 5; 
@@ -55,7 +52,7 @@
         }
         .decoration-container.active { opacity: 1; }
 
-        .particle { position: absolute; animation: fall linear infinite; pointer-events: none; user-select: none; }
+        .particle { position: absolute; animation: fall linear infinite; pointer-events: none; }
         @keyframes fall {
             0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
             10% { opacity: 1; }
@@ -63,7 +60,6 @@
             100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
         }
 
-        /* 3D 結構 */
         .viewport {
             width: var(--card-w); height: var(--card-h);
             transform-style: preserve-3d;
@@ -176,23 +172,25 @@
 
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('youtube-player', {
-                videoId: 'XfbtoujqkWo',
                 playerVars: {
-                    'autoplay': 1, 'loop': 1, 'playlist': 'XfbtoujqkWo',
-                    'controls': 0, 'showinfo': 0, 'modestbranding': 1, 'mute': 1
+                    'listType': 'playlist',
+                    'list': 'PL1U2BLQmiBsfNlI57Ph5J1m19By6Jn-Hn', // 你的播放清單 ID
+                    'autoplay': 1,
+                    'loop': 1,
+                    'controls': 0,
+                    'showinfo': 0,
+                    'modestbranding': 1,
+                    'mute': 1
                 },
                 events: { 'onReady': (e) => e.target.playVideo() }
             });
         }
 
-        // 啟動驚喜 (永久性啟動)
         function triggerSurprise() {
             if (hasTriggered) return;
             hasTriggered = true;
-            
-            toggleBtn.style.display = 'flex'; // 顯示控制鈕
-            decorContainer.classList.add('active'); // 開始飄落愛心/玫瑰/音符
-            
+            toggleBtn.style.display = 'flex';
+            decorContainer.classList.add('active');
             if (player) {
                 player.unMute();
                 player.setVolume(50);
@@ -201,7 +199,6 @@
             }
         }
 
-        // 靜音鈕邏輯 - 唯一能控制聲音的地方
         toggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (!player) return;
@@ -216,6 +213,7 @@
             }
         });
 
+        // 3D 旋轉與點擊邏輯
         const viewport = document.getElementById('viewport');
         let baseRotX = 30, baseRotY = -30, gyroX = 0, gyroY = 0;
         let isDragging = false, lastX = 0, lastY = 0, moved = false;
@@ -244,9 +242,9 @@
 
         const endAction = () => {
             if (isDragging && !moved) {
-                const isOpening = !cover.classList.contains('is-open');
+                const isOpeningNow = !cover.classList.contains('is-open');
                 cover.classList.toggle('is-open');
-                if (isOpening) triggerSurprise(); // 第一次打開即啟動驚喜
+                if (isOpeningNow) triggerSurprise();
             }
             isDragging = false;
         };
