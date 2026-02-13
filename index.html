@@ -22,9 +22,13 @@
         body {
             display: flex; justify-content: center; align-items: center;
             height: 100vh; background: radial-gradient(circle, #2c1a1a 0%, #1a1a1a 100%);
-            margin: 0; perspective: 2500px; overflow: hidden; touch-action: none;
+            margin: 0; perspective: 2500px; overflow: hidden;
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            /* 讓滑鼠在畫面上顯示為抓取狀態，提示可以拖曳 */
+            cursor: grab;
         }
+
+        body:active { cursor: grabbing; }
 
         /* --- 音樂控制按鈕 --- */
         #music-toggle {
@@ -38,13 +42,13 @@
             font-size: 20px; color: white;
             z-index: 1000; cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
             -webkit-tap-highlight-color: transparent;
         }
+        #music-toggle:hover { transform: scale(1.1); background: rgba(255, 255, 255, 0.25); }
 
-        /* YouTube 隱藏容器 */
         #youtube-player { position: absolute; width: 0; height: 0; pointer-events: none; opacity: 0; }
 
-        /* 漂浮愛心背景 */
         .hearts-container { position: fixed; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
         .heart-particle {
             position: absolute; color: rgba(255, 105, 180, 0.4);
@@ -61,6 +65,7 @@
             transform-style: preserve-3d;
             transform: rotateX(30deg) rotateY(-30deg) scale(0.9);
             transition: transform 0.1s ease-out; z-index: 10;
+            pointer-events: none; /* 讓點擊穿透到 body 處理 */
         }
 
         .card-system { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; }
@@ -151,7 +156,7 @@
         </div>
     </div>
 
-    <div class="hint">Tap to Open • Tilt to Rotate</div>
+    <div class="hint">Click/Drag to Interact • Tilt if on Mobile</div>
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
@@ -170,19 +175,81 @@
         }
 
         toggleBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // 防止點擊按鈕時也觸發卡片開合
+            e.stopPropagation();
             if (!player) return;
-
             if (player.isMuted()) {
-                player.unMute();
-                player.setVolume(50);
-                toggleBtn.innerHTML = '🔊';
+                player.unMute(); player.setVolume(50); toggleBtn.innerHTML = '🔊';
             } else {
-                player.mute();
-                toggleBtn.innerHTML = '🔇';
+                player.mute(); toggleBtn.innerHTML = '🔇';
             }
         });
 
+        // --- 控制邏輯：同時支援滑鼠與觸控 ---
+        const viewport = document.getElementById('viewport');
+        const cover = document.getElementById('cover');
+        let baseRotX = 30, baseRotY = -30, gyroX = 0, gyroY = 0;
+        let isDragging = false, lastX = 0, lastY = 0, moved = false;
+
+        function updateTransform() {
+            viewport.style.transform = `rotateX(${baseRotX + gyroX}deg) rotateY(${baseRotY + gyroY}deg) scale(0.9)`;
+        }
+
+        // 滑鼠/觸控開始
+        const startAction = (e) => {
+            isDragging = true;
+            moved = false;
+            lastX = e.pageX || e.touches[0].pageX;
+            lastY = e.pageY || e.touches[0].pageY;
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission();
+            }
+        };
+
+        // 滑鼠/觸控移動
+        const moveAction = (e) => {
+            if (!isDragging) return;
+            const currentX = e.pageX || e.touches[0].pageX;
+            const currentY = e.pageY || e.touches[0].pageY;
+            
+            const deltaX = currentX - lastX;
+            const deltaY = currentY - lastY;
+
+            if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) moved = true;
+
+            baseRotY += deltaX * 0.4;
+            baseRotX -= deltaY * 0.4;
+            lastX = currentX; lastY = currentY;
+            updateTransform();
+        };
+
+        // 滑鼠/觸控結束
+        const endAction = () => {
+            if (isDragging && !moved) {
+                cover.classList.toggle('is-open');
+                // 首次點擊嘗試解除靜音
+                if (player && player.isMuted()) {
+                    player.unMute(); player.setVolume(50); toggleBtn.innerHTML = '🔊';
+                }
+            }
+            isDragging = false;
+        };
+
+        window.addEventListener('mousedown', startAction);
+        window.addEventListener('mousemove', moveAction);
+        window.addEventListener('mouseup', endAction);
+        window.addEventListener('touchstart', startAction, {passive: false});
+        window.addEventListener('touchmove', moveAction, {passive: false});
+        window.addEventListener('touchend', endAction);
+
+        // 手機陀螺儀
+        window.addEventListener('deviceorientation', (e) => {
+            if (e.beta === null) return;
+            gyroX = (e.beta - 45) * 0.3;
+            gyroY = e.gamma * 0.3;
+            updateTransform();
+        });
+
+        // 產生愛心
         function createHearts() {
             const container = document.getElementById('hearts');
             for(let i=0; i<15; i++) {
@@ -196,44 +263,6 @@
             }
         }
         createHearts();
-
-        const viewport = document.getElementById('viewport');
-        const cover = document.getElementById('cover');
-        let baseRotX = 30, baseRotY = -30, gyroX = 0, gyroY = 0;
-
-        function updateTransform() {
-            viewport.style.transform = `rotateX(${baseRotX + gyroX}deg) rotateY(${baseRotY + gyroY}deg) scale(0.9)`;
-        }
-
-        window.addEventListener('deviceorientation', (e) => {
-            if (e.beta === null) return;
-            gyroX = (e.beta - 45) * 0.3;
-            gyroY = e.gamma * 0.3;
-            updateTransform();
-        });
-
-        let isMoving = false, lastX = 0, lastY = 0;
-        window.addEventListener('touchstart', (e) => {
-            isMoving = false;
-            lastX = e.touches[0].pageX; lastY = e.touches[0].pageY;
-            
-            // 為了讓移動設備允許聲音，第一次點擊螢幕任何地方也可以嘗試啟動 (但按鈕更精確)
-            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission();
-            }
-        });
-
-        window.addEventListener('touchmove', (e) => {
-            isMoving = true;
-            baseRotY += (e.touches[0].pageX - lastX) * 0.4;
-            baseRotX -= (e.touches[0].pageY - lastY) * 0.4;
-            lastX = e.touches[0].pageX; lastY = e.touches[0].pageY;
-            updateTransform();
-        });
-
-        window.addEventListener('touchend', () => { 
-            if (!isMoving) cover.classList.toggle('is-open'); 
-        });
     </script>
 </body>
 </html>
